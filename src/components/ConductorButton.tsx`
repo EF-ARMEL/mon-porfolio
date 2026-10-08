@@ -1,0 +1,199 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+
+const TEXT =
+  "Au-delà du développement traditionnel, j'articule les intelligences artificielles pour décupler les capacités de vos plateformes. Cette démarche s'accompagne d'une exigence absolue quant à l'ergonomie et au raffinement visuel de vos interfaces.";
+
+type Props = {
+  label?: string;
+  /** Côté d'ancrage du panneau par rapport au bouton */
+  align?: "left" | "right";
+};
+
+export default function ConductorButton({
+  label = "Chef d'Orchestre",
+  align = "left",
+}: Props) {
+  const root = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const tl = useRef<gsap.core.Timeline | null>(null);
+  const pointerType = useRef<string>("mouse");
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const ctx = gsap.context(() => {
+      const q = gsap.utils.selector(root);
+
+      // --- Timeline d'ouverture (Ultra-Cinématique) ---
+      const t = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
+
+      t.to(q(".lbl-a"), { yPercent: -120, duration: 0.6, ease: "power4.inOut" }, 0)
+        .fromTo(q(".lbl-b"), { yPercent: 120 }, { yPercent: 0, duration: 0.6, ease: "power4.inOut" }, 0)
+        .fromTo(q(".sheen"), { xPercent: -150, opacity: 0 }, { xPercent: 150, opacity: 1, duration: 1.2, ease: "power2.inOut" }, 0)
+        .to(q(".halo"), { opacity: 1, scale: 1.2, duration: 0.8 }, 0)
+
+        // OuvertureRideau : Effet d'expansion organique
+        .fromTo(
+          q(".panel"),
+          { clipPath: "inset(50% 0% 50% 0% round 28px)", autoAlpha: 1 },
+          { clipPath: "inset(0% 0% 0% 0% round 28px)", duration: 1.2, ease: "expo.inOut" },
+          0.1
+        )
+        .fromTo(q(".panel-bg"), { scale: 1.3, filter: "blur(20px)" }, { scale: 1, filter: "blur(0px)", duration: 1.4 }, 0.1)
+
+        // Coup de baguette : Filament lumineux avec traînée
+        .fromTo(q(".baton"), { scaleX: 0, transformOrigin: "left center" }, { scaleX: 1, duration: 1, ease: "power3.inOut" }, 0.2)
+        .to(q(".baton"), { opacity: 0.2, duration: 0.8 }, 1.2)
+
+        // Texte : Révélation "Partition" avec rotation et flou
+        .fromTo(
+          q(".word"),
+          { yPercent: 100, opacity: 0, filter: "blur(12px)", rotateX: -20 },
+          { yPercent: 0, opacity: 1, filter: "blur(0px)", rotateX: 0, duration: 1, stagger: 0.015, ease: "power4.out" },
+          0.4
+        );
+
+      tl.current = t;
+
+      // --- Interaction 3D & Magnétisme (L'effet "Objet Physique") ---
+      if (!reduce && btn.current && window.matchMedia("(pointer: fine)").matches) {
+        const xTo = gsap.quickTo(btn.current, "x", { duration: 0.5, ease: "power3" });
+        const yTo = gsap.quickTo(btn.current, "y", { duration: 0.5, ease: "power3" });
+        const rXTo = gsap.quickTo(btn.current, "rotationX", { duration: 0.5, ease: "power3" });
+        const rYTo = gsap.quickTo(btn.current, "rotationY", { duration: 0.5, ease: "power3" });
+
+        const move = (e: MouseEvent) => {
+          const r = btn.current!.getBoundingClientRect();
+          const centerX = r.left + r.width / 2;
+          const centerY = r.top + r.height / 2;
+
+          const dx = e.clientX - centerX;
+          const dy = e.clientY - centerY;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < 150) {
+            xTo(dx * 0.2);
+            yTo(dy * 0.2);
+            rYTo(dx * 0.05); // Inclinaison latérale
+            rXTo(-dy * 0.05); // Inclinaison verticale
+          } else {
+            xTo(0);
+            yTo(0);
+            rXTo(0);
+            rYTo(0);
+          }
+        };
+        const leave = () => {
+          xTo(0);
+          yTo(0);
+          rXTo(0);
+          rYTo(0);
+        };
+        btn.current.addEventListener("mousemove", move);
+        btn.current.addEventListener("mouseleave", leave);
+      }
+
+      if (reduce) t.timeScale(20);
+    }, root);
+
+    return () => ctx.revert();
+  }, []);
+
+  const open = () => tl.current?.timeScale(reducedSpeed(1)).play();
+  const close = () => tl.current?.timeScale(reducedSpeed(1.7)).reverse();
+  const reducedSpeed = (s: number) =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? 20
+      : s;
+
+  return (
+    <div
+      ref={root}
+      className="relative inline-block"
+      onPointerEnter={(e) => {
+        pointerType.current = e.pointerType;
+        if (e.pointerType === "mouse") open();
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === "mouse") close();
+      }}
+      onFocus={open}
+      onBlur={close}
+      onKeyDown={(e) => e.key === "Escape" && close()}
+    >
+      {/* Halo volumétrique évolutif */}
+      <span
+        aria-hidden
+        className="halo pointer-events-none absolute -inset-8 -z-10 scale-75 rounded-full opacity-0 blur-3xl transition-opacity duration-500"
+        style={{ background: "radial-gradient(closest-side, rgba(139,92,246,0.6), transparent)" }}
+      />
+
+      <button
+        ref={btn}
+        type="button"
+        aria-describedby="conductor-panel"
+        style={{ transformStyle: "preserve-3d" }}
+        onClick={() => {
+          if (pointerType.current !== "mouse") {
+            const t = tl.current;
+            if (t) (t.progress() > 0.5 ? close : open)();
+          }
+        }}
+        onPointerDown={(e) => (pointerType.current = e.pointerType)}
+        className="relative overflow-hidden rounded-full border border-white/20 bg-black/60 px-8 py-4 backdrop-blur-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD000] transition-colors hover:border-white/40"
+      >
+        {/* Reflet cristallin (Sheen) */}
+        <span aria-hidden className="sheen pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+        <span className="relative block overflow-hidden font-['Archivo_Black'] text-sm uppercase tracking-[0.2em] text-white md:text-base">
+          <span className="lbl-a block">{label}</span>
+          <span aria-hidden className="lbl-b absolute inset-0 block text-[#FFD000]">
+            {label}
+          </span>
+        </span>
+      </button>
+
+      {/* Panneau Immersif */}
+      <div
+        id="conductor-panel"
+        role="tooltip"
+        className={`panel pointer-events-none invisible absolute top-full z-50 mt-6 w-[min(36rem,90vw)] overflow-hidden rounded-[32px] ${
+          align === "left" ? "left-0" : "right-0"
+        }`}
+        style={{ clipPath: "inset(50% 0% 50% 0% round 32px)" }}
+      >
+        <div
+          className="panel-bg absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(130% 150% at 0% 0%, #8B5CF6 0%, #6D28D9 40%, #1E0B4D 100%)",
+          }}
+        />
+        {/* Grain argentique haute densité */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+          }}
+        />
+        <span aria-hidden className="baton absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-[#FF6A00] via-[#FFD000] to-transparent" />
+
+        <p className="relative px-10 py-10 font-['Manrope',sans-serif] text-[16px] leading-relaxed text-white/90 md:text-lg">
+          {TEXT.split(" ").map((w, i) => (
+            <span key={i} className="inline-block overflow-hidden align-top">
+              <span className="word inline-block will-change-transform">
+                {w}&nbsp;
+              </span>
+            </span>
+          ))}
+        </p>
+      </div>
+    </div>
+  );
+}
