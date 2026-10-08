@@ -4,7 +4,25 @@
       "Bash(dir *)",
       "Bash(npx create-next-app@latest *)",
       "Bash(npm run *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "PowerShell(npx next build)",
+      "Bash(npx next *)",
+      "Bash(npx react-dom *)",
+      "Bash(npx tsc *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(npx grep *)",
+      "Bash(npm install *)",
+      "Bash(npx gsap-cli *)",
+      "Bash(npm uninstall *)",
+      "Bash(\" \"src/components/hero/Hero.tsx\")",
+      "Bash(mv \"src/components/hero/Hero.tsx`\" \"src/components/hero/Hero.tsx\")",
+      "WebFetch(domain:medium.com)",
+      "Bash(npm i *)",
+      "Bash(node *)",
+      "Bash(git add *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "aidesigner"
+  ]
 }
