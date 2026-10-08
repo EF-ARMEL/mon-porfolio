@@ -1,7 +1,39 @@
-export default function Home() {
+"use client";
+
+import { useState } from "react";
+import Preloader from "@/components/layout/Preloader";
+import Hero from "@/components/hero/Hero";
+import About from "@/components/sections/About";
+import Stack from "@/components/sections/Stack";
+import Toolbox from "@/components/sections/Toolbox";
+import Quiz from "@/components/sections/Quiz";
+import ProjectsSection from "@/components/projects/ProjectsSection";
+import SmoothScroll from "@/components/SmoothScroll";
+import ContactScene from "@/components/ContactScene";
+
+export default function Page() {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white text-black">
-      <h1 className="text-4xl font-bold">Portfolio Base Ready</h1>
-    </main>
+    <>
+      {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
+
+      {/* Site-wide Grain Overlay */}
+      <div className="grain-overlay" />
+
+      <main className={`min-h-screen transition-all duration-1000 ease-in-out ${isLoading ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`} style={{ transform: 'none', filter: 'none', willChange: 'auto' }}>
+        <Hero startAnimation={!isLoading} />
+        <About />
+        <ProjectsSection />
+        <Stack />
+        <Toolbox />
+        <Quiz />
+
+        <SmoothScroll>
+          <ContactScene />
+          <div className="h-[30vh]" aria-hidden />
+        </SmoothScroll>
+      </main>
+    </>
   );
 }
