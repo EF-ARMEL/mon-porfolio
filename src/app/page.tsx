@@ -1,39 +1,22 @@
-"use client";
+import Home from "@/components/Home";
+import Maintenance from "@/components/Maintenance";
+import { isMaintenance } from "@/lib/db";
+import { listProjects, seedProjectsIfEmpty } from "@/lib/admin/projects";
+import { isAuthenticated } from "@/lib/admin/auth";
 
-import { useState } from "react";
-import Preloader from "@/components/layout/Preloader";
-import Hero from "@/components/hero/Hero";
-import About from "@/components/sections/About";
-import Stack from "@/components/sections/Stack";
-import Toolbox from "@/components/sections/Toolbox";
-import Quiz from "@/components/sections/Quiz";
-import ProjectsSection from "@/components/projects/ProjectsSection";
-import SmoothScroll from "@/components/SmoothScroll";
-import ContactScene from "@/components/ContactScene";
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  const [isLoading, setIsLoading] = useState(true);
+export default async function Page() {
+  // Maintenance : le visiteur voit la page dédiée. L'admin connecté garde l'accès.
+  const [maintenance, admin] = await Promise.all([isMaintenance(), isAuthenticated()]);
 
-  return (
-    <>
-      {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
+  if (maintenance && !admin) {
+    return <Maintenance />;
+  }
 
-      {/* Site-wide Grain Overlay */}
-      <div className="grain-overlay" />
+  // Seed des projets par défaut à la première visite (no-op ensuite).
+  await seedProjectsIfEmpty();
+  const projects = await listProjects();
 
-      <main className={`min-h-screen transition-all duration-1000 ease-in-out ${isLoading ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`} style={{ transform: 'none', filter: 'none', willChange: 'auto' }}>
-        <Hero startAnimation={!isLoading} />
-        <About />
-        <ProjectsSection />
-        <Stack />
-        <Toolbox />
-        <Quiz />
-
-        <SmoothScroll>
-          <ContactScene />
-          <div className="h-[30vh]" aria-hidden />
-        </SmoothScroll>
-      </main>
-    </>
-  );
+  return <Home projects={projects} />;
 }

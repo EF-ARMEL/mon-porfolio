@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp, isEmail, isUsed, markUsed, rateLimit, verifyToken } from "@/lib/quiz/security";
 import { sendRewardMail } from "@/lib/quiz/mailer";
+import { logQuizResult } from "@/lib/admin/quiz";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,12 @@ export async function POST(req: Request) {
   try {
     await sendRewardMail(email);
     markUsed(token.n); // consommé seulement après un envoi réussi : un échec permet de réessayer
+    // Tracé pour le dashboard admin (qui a réussi la question secrète).
+    try {
+      await logQuizResult({ email, answer: "question secrète réussie", score: 5 });
+    } catch (err) {
+      console.error("[quiz] Échec de tracé en base :", err);
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[quiz] Échec d'envoi :", err);

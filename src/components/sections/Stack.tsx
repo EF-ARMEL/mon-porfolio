@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -44,8 +44,26 @@ const TOOLS: Tool[] = [
 
 function Logo({ tool, size }: { tool: Tool; size: number }) {
   if (tool.Icon) return <tool.Icon size={size} color={tool.color} aria-hidden />;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={tool.src} width={size} height={size} alt="" aria-hidden />;
+  // SVG inline (pas <img>) : le currentColor des fichiers /logos/* se résout
+  // uniquement dans le DOM, sinon le logo disparaît sur fond noir.
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      style={{ color: tool.color }}
+      aria-hidden
+    >
+      {tool.id === "gpt" ? (
+        /* Fleur officielle OpenAI/ChatGPT : compound path avec trous (windings opposés),
+           le disque plat d'avant venait d'un tracé 100% horaire en fill-rule nonzero. */
+        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z" />
+      ) : (
+        <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
+      )}
+    </svg>
+  );
 }
 
 export default function Stack() {
@@ -59,6 +77,7 @@ export default function Stack() {
   const veil = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const nodes = useRef<(HTMLButtonElement | null)[]>([]);
+  const card = useRef<HTMLDivElement>(null);
   const prev = useRef(-1);
   const S = useRef({ a: 0, sp: 1, tg: 1, k: 0, R: 0, rot: 1 });
 
@@ -156,9 +175,57 @@ export default function Stack() {
           { y: 0, opacity: 1, duration: 0.7, stagger: 0.06, ease: "expo.out" }
         );
       }
+
+      if (card.current) {
+        gsap.fromTo(
+          card.current.children,
+          { y: 14, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.55, stagger: 0.05, ease: "expo.out", overwrite: "auto" }
+        );
+      }
     },
     { dependencies: [active], scope: root }
   );
+
+  /* ───── Mobile : l'orchestre se joue tout seul jusqu'au premier toucher ───── */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!mq.matches || reduce) return;
+
+    let timer = 0;
+    let stopped = false;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !stopped && !timer) {
+          timer = window.setInterval(() => {
+            setActive((a) => (a + 1) % TOOLS.length);
+          }, 2600);
+        } else if (!e.isIntersecting && timer) {
+          clearInterval(timer);
+          timer = 0;
+        }
+      },
+      { threshold: 0.35 }
+    );
+    if (root.current) io.observe(root.current);
+
+    const stop = () => {
+      stopped = true;
+      if (timer) {
+        clearInterval(timer);
+        timer = 0;
+      }
+    };
+    window.addEventListener("pointerdown", stop, { once: true });
+
+    return () => {
+      io.disconnect();
+      if (timer) clearInterval(timer);
+      window.removeEventListener("pointerdown", stop);
+    };
+  }, []);
 
   const cur = active >= 0 ? TOOLS[active] : null;
 
@@ -187,7 +254,7 @@ export default function Stack() {
       <div
         ref={stage}
         onClick={() => setActive(-1)}
-        className="relative h-[min(70vh,700px)] min-h-[480px] w-full"
+        className="relative h-[min(52vh,700px)] min-h-[400px] w-full md:h-[min(70vh,700px)] md:min-h-[480px]"
       >
         {/* Anneau pointillé */}
         <div
@@ -218,7 +285,7 @@ export default function Stack() {
                   {t(`stack.${cur.id}.role`, cur.role)}
                 </small>
                 <h3 className="font-heading text-[clamp(1.4rem,3vw,2.4rem)] uppercase leading-none">{cur.name}</h3>
-                <p className="font-body text-[11px] leading-[1.45] text-white/90 md:text-sm">
+                <p className="hidden font-body text-[11px] leading-[1.45] text-white/90 md:block md:text-sm">
                   {t(`stack.${cur.id}.desc`, cur.desc)}
                 </p>
               </>
@@ -260,8 +327,34 @@ export default function Stack() {
         ))}
       </div>
 
+      {/* Mobile : la carte détail sous l'anneau (le cercle reste lisible au doigt) */}
+      <div
+        ref={card}
+        className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center md:hidden"
+      >
+        {cur ? (
+          <div key={cur.id}>
+            <span className="mb-2 flex justify-center">
+              <Logo tool={cur} size={34} />
+            </span>
+            <small className="font-body text-xs font-semibold text-[#FFD000]">
+              {t(`stack.${cur.id}.role`, cur.role)}
+            </small>
+            <h3 className="font-heading text-2xl uppercase leading-none">{cur.name}</h3>
+            <p className="mt-1.5 font-body text-xs leading-[1.5] text-white/85">
+              {t(`stack.${cur.id}.desc`, cur.desc)}
+            </p>
+          </div>
+        ) : (
+          <p className="font-body text-xs leading-[1.5] text-zinc-400">
+            {t("stack.card_teaser", "Dix instruments, un seul chef. Touche un instrument pour écouter sa partition.")}
+          </p>
+        )}
+      </div>
+
       <p className="mt-6 text-center font-body text-xs text-zinc-500">
-        {t("stack.hint", "Survole un instrument")}
+        <span className="md:hidden">{t("stack.hint_touch", "Touche un instrument")}</span>
+        <span className="hidden md:inline">{t("stack.hint", "Survole un instrument")}</span>
       </p>
     </section>
   );

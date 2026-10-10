@@ -4,8 +4,9 @@ import React, { useRef } from 'react';
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import ProjectCabinet from './ProjectCabinet';
+import type { ProjectRecord } from "@/lib/admin/projects";
 
-export default function ProjectsSection() {
+export default function ProjectsSection({ projects }: { projects: ProjectRecord[] }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   useGSAP(() => {
@@ -24,7 +25,7 @@ export default function ProjectsSection() {
   }, { scope: titleRef });
 
   return (
-    <div className="text-white">
+    <div className="bg-black text-white">
       <div className="max-w-[1040px] mx-auto px-5 pt-[96px] text-center">
         <h2
           ref={titleRef}
@@ -39,15 +40,7 @@ export default function ProjectsSection() {
         </h2>
       </div>
 
-      <ProjectCabinet />
-
-      <section className="max-w-[1040px] mx-auto px-5 py-[96px] pb-[120px] flex flex-col gap-4">
-        <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/60">Fin de la sélection</span>
-        <p className="m-0 max-w-[56ch] text-white/60">
-          Les trois projets restent posés l'un sous l'autre.
-          C'est ici que s'arrête la sélection curatoriale, laissant place à l'exploration complète.
-        </p>
-      </section>
+      <ProjectCabinet projects={projects} />
     </div>
   );
 }

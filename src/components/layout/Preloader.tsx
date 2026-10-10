@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -13,16 +13,15 @@ export default function Preloader({ onComplete }: PreloaderProps) {
   const lineRef = useRef<HTMLDivElement>(null);
   const quoteRef = useRef<HTMLDivElement>(null);
   const nousDevRef = useRef<HTMLDivElement>(null);
-  const [isReducedMotion, setIsReducedMotion] = useState(false);
 
   useGSAP(() => {
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const reducedMotion = motionQuery.matches;
-    setIsReducedMotion(reducedMotion);
 
-    // CRITICAL: Clear any previous GSAP animations to prevent "double play"
-    // especially during React Strict Mode double-mounts.
-    gsap.set([lineRef.current, quoteRef.current, nousDevRef.current], { clearProps: "all" });
+    // Les états initiaux sont dans le JSX (style opacity:0) pour que le HTML
+    // serveur n&apos;affiche jamais le contenu avant l&apos;animation (sinon on voit
+    // le preloader « déjà chargé » puis il rejoue → l&apos;illusion d&apos;un double chargement).
+    // On repart de ces états de départ sans les effacer.
 
     const tl = gsap.timeline({
       onComplete: () => {
@@ -30,7 +29,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
           duration: 1.2,
           opacity: 0,
           ease: "expo.inOut",
-          onComplete: onComplete,
+          onComplete: () => onComplete(),
         });
       },
     });
@@ -108,14 +107,14 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       <div
         ref={lineRef}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-px bg-brand-orange z-20"
-        style={{ transformOrigin: "center" }}
+        style={{ transformOrigin: "center", opacity: 0 }}
       />
 
       {/* Cinematic Content Stack */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center select-none pointer-events-none px-6">
 
         {/* Quote Section */}
-        <div ref={quoteRef} className="mb-16 flex flex-col items-center">
+        <div ref={quoteRef} className="mb-16 flex flex-col items-center" style={{ opacity: 0 }}>
           <span className="text-xs md:text-sm font-body text-brand-orange tracking-[0.6em] uppercase mb-8 opacity-90">
             PROVERBES 16:3
           </span>
@@ -127,7 +126,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
         </div>
 
         {/* Brand Section */}
-        <div ref={nousDevRef} className="mt-8">
+        <div ref={nousDevRef} className="mt-8" style={{ opacity: 0 }}>
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading text-white leading-none tracking-tighter uppercase" style={{ fontWeight: 900 }}>
             NOUSDEV
           </h1>

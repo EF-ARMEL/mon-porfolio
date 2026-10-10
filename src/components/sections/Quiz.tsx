@@ -480,14 +480,18 @@ export default function Quiz() {
     () => {
       if (!root.current || reduced()) return;
       const lines = gsap.utils.toArray<HTMLElement>(".qz-line", root.current);
-      gsap.set(lines, { yPercent: 110 });
-      gsap.to(lines, {
-        yPercent: 0,
-        duration: 1.2,
-        stagger: 0.1,
-        ease: "expo.out",
-        scrollTrigger: { trigger: root.current, start: "clamp(top 70%)", once: true },
-      });
+      gsap.fromTo(
+        lines,
+        { yPercent: 110 },
+        {
+          yPercent: 0,
+          duration: 1.2,
+          stagger: 0.1,
+          ease: "expo.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: root.current, start: "clamp(top 70%)", once: true },
+        }
+      );
     },
     { scope: root }
   );

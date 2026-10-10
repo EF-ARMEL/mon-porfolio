@@ -35,6 +35,33 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 /** Position de chaque étape sur l'échelle 0 = moteur, 100 = expérience. À ajuster. */
 const SPECTRUM = [8, 36, 64, 92];
 const STEPS = [1, 2, 3, 4];
+
+/**
+ * Les 4 phases de projet (contenu réel, adapté du cycle de gestion de projet).
+ * Servies en défauts i18n : about.stepN_date / _title / _text les surchargent si présentes.
+ */
+const STEP_CONTENT = [
+  {
+    label: "Go / No Go",
+    title: "Cadrage",
+    text: "Poser les bases : objectifs, besoins, budget global et risques majeurs. On valide l'utilité du projet et le feu vert avant d'engager les ressources.",
+  },
+  {
+    label: "Feuille de route",
+    title: "Planification",
+    text: "Organiser la manière d'atteindre les objectifs : calendrier, échéancier des tâches, répartition des rôles et indicateurs de suivi.",
+  },
+  {
+    label: "Exécution",
+    title: "Réalisation",
+    text: "Produire les livrables : coordonner les ressources, suivre l'avancement, ajuster le plan en cas d'imprévus et communiquer régulièrement.",
+  },
+  {
+    label: "Bilan",
+    title: "Clôture",
+    text: "Terminer officiellement le projet : livrer le résultat final, archiver les documents et analyser réussites et axes d'amélioration (retour d'expérience).",
+  },
+];
 const pad = (n: number) => String(n).padStart(2, "0");
 const EMPHASIS = /^(pont|bridge)$/i;
 
@@ -63,7 +90,7 @@ export default function About() {
   const engine = t("about.engine", "Moteur");
   const experience = t("about.experience", "Expérience");
   const words = manifesto.split(/\s+/).filter(Boolean);
-  const stepTitles = STEPS.map((n) => t(`about.step${n}_title`, `Étape ${n}`));
+  const stepTitles = STEPS.map((n, i) => t(`about.step${n}_title`, STEP_CONTENT[i].title));
 
   useGSAP(
     () => {
@@ -283,7 +310,7 @@ export default function About() {
         <div className="abt-jny">
           <aside className="abt-side">
             <h3 className="abt-j-title">
-              {t("about.journey_title", "Parcours")}
+              {t("about.journey_title", "Méthode")}
               <small>
                 {pad(STEPS.length)} {t("about.steps_count", "étapes")}
               </small>
@@ -291,7 +318,7 @@ export default function About() {
             <p className="abt-j-desc">
               {t(
                 "about.journey_description",
-                "De la conception d'outils métiers robustes pour l'immobilier à la création d'interfaces immersives, mon approche fusionne rigueur technique et ambition visuelle."
+                "Quatre phases pour mener un projet de bout en bout : poser les bases, organiser le travail, livrer, puis faire le bilan — avec des points de contrôle clairs à chaque étape."
               )}
             </p>
 
@@ -363,7 +390,7 @@ export default function About() {
                   {pad(n)}
                 </span>
                 <div className="abt-body">
-                  <span className="abt-date">{t(`about.step${n}_date`, `Étape ${n}`)}</span>
+                  <span className="abt-date">{t(`about.step${n}_date`, STEP_CONTENT[i].label)}</span>
                   <h4>
                     <span className="abt-tmask">
                       <span className="abt-tin" data-tin>
@@ -371,7 +398,7 @@ export default function About() {
                       </span>
                     </span>
                   </h4>
-                  <p data-fade>{t(`about.step${n}_text`, `Description de l'étape ${n}`)}</p>
+                  <p data-fade>{t(`about.step${n}_text`, STEP_CONTENT[i].text)}</p>
                   <div className="abt-mini" aria-hidden>
                     <span className="abt-mini-track" />
                     <i />

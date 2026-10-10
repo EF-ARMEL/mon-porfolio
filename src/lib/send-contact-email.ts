@@ -15,21 +15,27 @@ interface ContactData {
  * Utilise Nodemailer pour envoyer les données vers l'email de l'administrateur.
  */
 export async function sendContactEmail(data: ContactData) {
-  // Configuration du transporteur.
-  // En production, utilisez des variables d'environnement pour la sécurité.
+  // Transporteur SMTP : mêmes variables que le quiz (SMTP_*), présentes dans .env.local.
+  const host = process.env.SMTP_HOST;
+  if (!host) {
+    // Sans SMTP configuré en dev, on n'émet pas d'erreur : le message est déjà en base.
+    if (process.env.NODE_ENV === "production") throw new Error("SMTP_HOST manquant en production.");
+    console.warn("[contact] SMTP non configuré : e-mail de notification ignoré (message en base).");
+    return;
+  }
+
+  const port = Number(process.env.SMTP_PORT ?? 465);
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+    host,
+    port,
+    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465,
+    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || '"Portfolio NousDev" <noreply@nousdev.com>',
-    to: process.env.EMAIL_TO || 'votre-email@exemple.com',
+    from: process.env.MAIL_FROM || '"Portfolio NousDev" <noreply@nousdev.com>',
+    // Destinataire : MAIL_TO si défini, sinon l'expéditeur SMTP lui-même.
+    to: process.env.MAIL_TO || process.env.SMTP_USER || 'votre-email@exemple.com',
     subject: `🚀 Nouveau projet : ${data.projet} - ${data.nom}`,
     text: `
       Nouveau message reçu via le portfolio :

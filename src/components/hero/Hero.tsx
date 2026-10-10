@@ -185,6 +185,7 @@ export default function Hero({ startAnimation = false }: HeroProps) {
 
   return (
     <section
+      id="hero"
       ref={containerRef}
       style={{ visibility: "hidden" }}
       className="relative min-h-[100svh] w-full overflow-x-clip rounded-[28px]"

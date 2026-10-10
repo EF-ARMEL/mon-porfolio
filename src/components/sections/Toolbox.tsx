@@ -15,7 +15,7 @@ const TOOL_DATA = [
     label: "Précision",
     desc: "Architecture visuelle et prototypage haute fidélité.",
     Icon: PenTool,
-    size: "col-span-2 row-span-1",
+    size: "md:col-span-2 md:row-span-1",
     color: "#FFD000",
   },
   {
@@ -24,7 +24,7 @@ const TOOL_DATA = [
     label: "Vitesse",
     desc: "Optimisation Core Web Vitals et 60fps constant.",
     Icon: Bolt,
-    size: "col-span-1 row-span-1",
+    size: "md:col-span-1 md:row-span-1",
     color: "#8B5CF6",
   },
   {
@@ -33,7 +33,7 @@ const TOOL_DATA = [
     label: "Rigueur",
     desc: "Configuration sur-mesure et systèmes évolutifs.",
     Icon: SlidersHorizontal,
-    size: "col-span-1 row-span-2",
+    size: "md:col-span-1 md:row-span-2",
     color: "#FF6A00",
   },
   {
@@ -42,7 +42,7 @@ const TOOL_DATA = [
     label: "Curiosité",
     desc: "Veille technologique et résolution de problèmes complexes.",
     Icon: Search,
-    size: "col-span-1 row-span-1",
+    size: "md:col-span-1 md:row-span-1",
     color: "#FFFFFF",
   },
   {
@@ -51,7 +51,7 @@ const TOOL_DATA = [
     label: "Sensation",
     desc: "L'art de transformer du code en expérience émotionnelle.",
     Icon: Bolt,
-    size: "col-span-2 row-span-1",
+    size: "md:col-span-2 md:row-span-1",
     color: "#FFD000",
   },
 ];
@@ -66,9 +66,11 @@ export default function Toolbox() {
       duration: 1,
       stagger: 0.1,
       ease: "expo.out",
+      immediateRender: false,
       scrollTrigger: {
         trigger: container.current,
         start: "top 85%",
+        once: true,
       },
     });
   }, { scope: container });
@@ -77,12 +79,12 @@ export default function Toolbox() {
     <section className="relative w-full py-20 bg-black overflow-hidden">
       <div
         ref={container}
-        className="relative w-full max-w-6xl mx-auto grid grid-cols-4 grid-rows-2 gap-4 px-[5vw]"
+        className="relative w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-4 px-[5vw]"
       >
         {TOOL_DATA.map((tool) => (
           <div
             key={tool.id}
-            className={`tool-card group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 p-6 transition-all duration-500 hover:border-white/20 hover:bg-zinc-900/80 ${tool.size}`}
+            className={`tool-card group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 p-5 md:p-6 transition-all duration-500 hover:border-white/20 hover:bg-zinc-900/80 ${tool.size}`}
           >
             {/* Radial Glow Effect */}
             <div

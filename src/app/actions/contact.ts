@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { sendContactEmail } from "@/lib/send-contact-email";
+import { saveMessage } from "@/lib/admin/messages";
 
 const schema = z.object({
   nom: z.string().trim().min(2, "Indiquez votre nom."),
@@ -27,7 +28,10 @@ export async function sendContact(_prev: ContactState, formData: FormData): Prom
   if (String(formData.get("website") ?? "") !== "") return { ok: true };
 
   const raw = Object.fromEntries(
-    (["nom", "email", "tel", "projet", "budget", "delai", "message"] as const).map((k) => [k, String(formData.get(k) ?? "")])
+    (["nom", "email", "tel", "projet", "budget", "delai", "message"] as const).map((k) => [
+      k,
+      String(formData.get(k) ?? ""),
+    ])
   );
   const parsed = schema.safeParse(raw);
 
@@ -40,10 +44,26 @@ export async function sendContact(_prev: ContactState, formData: FormData): Prom
     return { ok: false, errors, values: raw, message: "Vérifiez les champs en orange." };
   }
 
+  const data = parsed.data;
+
+  // 1. Enregistrement en base (visible dans le dashboard admin).
+  let stored = false;
   try {
-    await sendContactEmail(parsed.data);
-    return { ok: true };
-  } catch {
-    return { ok: false, values: raw, message: "L'envoi a échoué. Réessayez dans un instant." };
+    await saveMessage(data);
+    stored = true;
+  } catch (err) {
+    console.error("[contact] Échec d'enregistrement en base :", err);
   }
+
+  // 2. Notification e-mail (échec non bloquant : le message est déjà en base).
+  try {
+    await sendContactEmail(data);
+  } catch (err) {
+    console.error("[contact] Échec d'envoi d'e-mail :", err);
+    if (!stored) {
+      return { ok: false, values: raw, message: "L'envoi a échoué. Réessayez dans un instant." };
+    }
+  }
+
+  return { ok: true };
 }

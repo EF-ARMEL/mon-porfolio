@@ -1,34 +1,23 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import ProjectDetail, { type DetailProject } from "./ProjectDetail";
+import type { ProjectRecord } from "@/lib/admin/projects";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /* ------------------------------------------------------------------ */
-/* DATA                                                                 */
+/* TYPE                                                                 */
 /* ------------------------------------------------------------------ */
 
-type Project = {
-  id: string;
-  title: string;
-  year: string;
-  kicker: string;
-  tags: string[];
-  href: string;
-  image?: string;
-  from: string;
-  to: string;
-};
+type Project = DetailProject;
 
-const PROJECTS: Project[] = [
-  { id: "01", title: "Projet Un", year: "2026", kicker: "Plateforme web · IA", tags: ["Next.js", "GSAP", "IA"], href: "#", from: "#ff6a00", to: "#ffd000" },
-  { id: "02", title: "Projet Deux", year: "2025", kicker: "Application · WebGL", tags: ["TypeScript", "Tailwind", "WebGL"], href: "#", from: "#7c3aed", to: "#ff6a00" },
-  { id: "03", title: "Projet Trois", year: "2025", kicker: "Design system · Produit", tags: ["UX / UI", "Design system"], href: "#", from: "#ffd000", to: "#7c3aed" },
-];
+/* Les données proviennent de la base (voir src/lib/admin/projects.ts) et
+   sont injectées par la page serveur via la prop `projects`. */
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -71,8 +60,10 @@ function ArrowIcon() {
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function ProjectCabinet() {
+export default function ProjectCabinet({ projects }: { projects: ProjectRecord[] }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState<DetailProject | null>(null);
+  const PROJECTS: Project[] = projects;
 
   useGSAP(() => {
     const section = sectionRef.current;
@@ -247,12 +238,14 @@ export default function ProjectCabinet() {
             <div className="pc-cell">
               <span className="pc-ground" data-ground />
 
-              <a
+              <button
+                type="button"
                 className="pc-card"
-                href={p.href}
                 data-card
                 data-cursor="hover"
-                aria-label={`Voir le projet ${p.title}`}
+                onClick={() => setOpen(p)}
+                aria-haspopup="dialog"
+                aria-label={`Ouvrir la fiche du projet ${p.title}`}
               >
                 <div className="pc-idx">
                   <b>{p.id}</b>
@@ -267,6 +260,7 @@ export default function ProjectCabinet() {
                       <li key={t}>{t}</li>
                     ))}
                   </ul>
+                  {p.desc && <p className="pc-desc">{p.desc}</p>}
                 </div>
 
                 <div className="pc-vis">
@@ -284,14 +278,25 @@ export default function ProjectCabinet() {
                       />
                     )}
                   </div>
+                  {p.status && (
+                    <span className="pc-status" aria-label={p.status}>
+                      <i aria-hidden />
+                      <b className="s-full" aria-hidden>
+                        {p.status}
+                      </b>
+                      <b className="s-short" aria-hidden>
+                        Bientôt
+                      </b>
+                    </span>
+                  )}
                   <span className="pc-go">
-                    <span>Voir le projet</span>
+                    <span>Voir la fiche</span>
                     <i>
                       <ArrowIcon />
                     </i>
                   </span>
                 </div>
-              </a>
+              </button>
 
               <span className="pc-pulse" data-pulse />
             </div>
@@ -303,6 +308,8 @@ export default function ProjectCabinet() {
           <i></i>
         </div>
       </div>
+
+      {open && <ProjectDetail project={open} onClose={() => setOpen(null)} />}
     </section>
   );
 }
@@ -518,6 +525,15 @@ const CSS = `/* ================= STYLES DU COMPOSANT ================= */
   grid-template-columns: clamp(52px, 9vw, 84px) minmax(0, 1fr) 34%;
   overflow: hidden;
   border-radius: 22px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   background: linear-gradient(135deg, #15131d 0%, #0b0a10 70%);
   box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.95);
   opacity: 0;
@@ -600,6 +616,52 @@ const CSS = `/* ================= STYLES DU COMPOSANT ================= */
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--pc-dim);
+}
+.pc-desc {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.58);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pc-status {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 106, 0, 0.55);
+  background: rgba(11, 10, 16, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffb37a;
+  white-space: nowrap;
+}
+.pc-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pc-orange);
+  box-shadow: 0 0 8px var(--pc-orange);
+  animation: pc-blink 1.4s ease-in-out infinite;
+}
+.pc-status .s-short { display: none; }
+@keyframes pc-blink {
+  50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-status i { animation: none; }
 }
 .pc-vis { position: relative; overflow: hidden; }
 .pc-bg { position: absolute; inset: 0; transition: transform 1s cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -684,6 +746,15 @@ const CSS = `/* ================= STYLES DU COMPOSANT ================= */
   .pc-card { grid-template-columns: clamp(52px, 9vw, 84px) minmax(0, 1fr) 30%; }
   .pc-main { padding: 0 12px; }
   .pc-kicker { font-size: 9px; letter-spacing: 0.14em; }
+  .pc-desc { -webkit-line-clamp: 2; font-size: 11px; }
+  .pc-status { top: 7px; left: 7px; font-size: 7.5px; letter-spacing: 0.06em; padding: 4px 6px; gap: 4px; }
+  /* Le visuel ne fait ~90px en mobile : texte long remplacé par sa forme courte */
+  .pc-status .s-full { display: none; }
+  .pc-status .s-short { display: inline; }
+}
+/* Ecran court : la carte fait 108-140px, la description déborderait du overflow:hidden */
+@media (max-height: 760px) {
+  .pc-desc { display: none; }
 }
 @media (min-width: 720px) {
   .pc-head { padding-inline: 48px; }

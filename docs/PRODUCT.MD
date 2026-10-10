@@ -306,7 +306,21 @@ Le visiteur doit pouvoir comprendre :
 
 ---
 
-### 6.11 Contact
+### 6.11 Témoignages
+
+Présenter des témoignages de personnes ayant collaboré avec Franck Armel.
+
+Chaque témoignage associe :
+
+* un nom ;
+* un rôle ou domaine (community management, IA, commercial, comptabilité, développement) ;
+* une citation courte.
+
+La section doit rester honnête : seuls des retours réels et autorisés doivent être publiés.
+
+---
+
+### 6.12 Contact
 
 Le portfolio doit permettre au visiteur d'envoyer un message.
 
