@@ -7,6 +7,6 @@ export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   // Déjà connecté → dashboard.
-  if (await isAuthenticated()) redirect("/admin");
+  if (await isAuthenticated()) redirect("/nousdev");
   return <LoginForm />;
 }

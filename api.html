@@ -5,6 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+
+
+    <style>
+        #liste {
+            display: grid;
+            gap: 16px;
+        }
+
+        .carte {
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .carte h3 {
+            margin: 0;
+            color: #0F766E;
+        }
+    </style>
 </head>
 
 <body>
@@ -13,7 +33,7 @@
     <h2>Liste des publications</h2>
 
 
-   <div id="liste" style="white-space: pre-line;"></div>
+    <div id="liste" style="white-space: pre-line;"></div>
 
     <script>
         async function getAppartements() {
@@ -33,9 +53,20 @@
                 liste.textContent = element.title
                 liste.appendChild(t)
 
-                // 4. Afficher les données
+
                 for (const element of datas) {
-                    liste.textContent += element.title;
+                    // 1. Créer une carte
+                    const carte = document.createElement('div');
+
+                    // 2. Ajouter un titre à la carte
+                    const titre = document.createElement('h3');
+                    titre.textContent = element.title;
+
+                    // 3. Ajouter le contenu à la carte
+                    carte.appendChild(titre);
+
+                    // 4. Ajouter la carte dans la page
+                    liste.appendChild(carte);
                 }
 
             } catch (error) {

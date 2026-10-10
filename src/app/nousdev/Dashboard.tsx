@@ -32,7 +32,7 @@ export default function Dashboard(props: Props) {
 
   const logout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
+    router.push("/nousdev/login");
     router.refresh();
   };
 

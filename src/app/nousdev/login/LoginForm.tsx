@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 const ERRORS: Record<string, string> = {
   invalid_credentials: "Mot de passe incorrect.",
@@ -11,6 +12,7 @@ const ERRORS: Record<string, string> = {
 export default function LoginForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -27,7 +29,7 @@ export default function LoginForm() {
       });
       const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (res.ok && data?.ok) {
-        router.push("/admin");
+        router.push("/nousdev");
         router.refresh();
         return;
       }
@@ -54,14 +56,24 @@ export default function LoginForm() {
 
         <label className="mt-8 block text-[11px] font-bold uppercase tracking-[0.15em] text-white/60">
           Mot de passe
-          <input
-            type="password"
-            value={password}
-            autoFocus
-            autoComplete="current-password"
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-2 h-12 w-full rounded-2xl bg-[#ECE8DD] px-4 text-base text-black outline-none focus:ring-2 focus:ring-[#FF6A00]"
-          />
+          <span className="relative mt-2 block">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              autoFocus
+              autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 w-full rounded-2xl bg-[#ECE8DD] px-4 pr-12 text-base text-black outline-none focus:ring-2 focus:ring-[#FF6A00]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              className="absolute inset-y-0 right-0 flex w-12 cursor-pointer items-center justify-center text-black/50 transition hover:text-black"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
         </label>
 
         {error && (

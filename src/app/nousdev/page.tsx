@@ -10,7 +10,7 @@ export const metadata = { title: "Dashboard · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  if (!(await isAuthenticated())) redirect("/admin/login");
+  if (!(await isAuthenticated())) redirect("/nousdev/login");
 
   const [projects, messages, unread, results, maintenance] = await Promise.all([
     listProjects(),
