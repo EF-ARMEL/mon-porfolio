@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { ProjectRecord } from "@/lib/admin/projects";
 
 type Block = { title: string; desc: string };
@@ -34,6 +35,51 @@ export function ProjectForm({
   }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState<string | null>(null);
+
+  const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+  const IMAGE_MAX = 5 * 1024 * 1024;
+
+  /** Sélection locale → validation → envoi réel vers /api/admin/upload. */
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImgError(null);
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setImgError("Format non supporté (JPG, PNG, WebP ou AVIF).");
+      return;
+    }
+    if (file.size > IMAGE_MAX) {
+      setImgError("Image trop lourde (5 Mo maximum).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; path?: string; error?: string }
+        | null;
+      if (res.ok && data?.ok && data.path) {
+        setF((s) => ({ ...s, image: data.path as string }));
+      } else {
+        setImgError(
+          data?.error === "too_large"
+            ? "Image trop lourde (5 Mo maximum)."
+            : data?.error === "unsupported_type"
+              ? "Format non supporté (JPG, PNG, WebP ou AVIF)."
+              : "Échec de l'envoi de l'image. Réessaie."
+        );
+      }
+    } catch {
+      setImgError("Erreur réseau pendant l'envoi.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const set = (k: keyof typeof f, v: string) => setF((s) => ({ ...s, [k]: v }));
   const setBlock = (i: number, k: keyof Block, v: string) =>
@@ -137,10 +183,50 @@ export function ProjectForm({
             Lien (href) — vide = carte non cliquable
             <input value={f.href} onChange={(e) => set("href", e.target.value)} className={input} />
           </label>
-          <label className={`${label} col-span-2`}>
-            Image (/projects/xxx.png)
-            <input value={f.image} onChange={(e) => set("image", e.target.value)} className={input} />
-          </label>
+          <div className={`${label} col-span-2`}>
+            Image du projet
+            <div className="mt-2 flex items-center gap-3">
+              <span className="relative block h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                {f.image ? (
+                  <Image src={f.image} alt="" fill sizes="96px" className="object-cover" />
+                ) : (
+                  <span className="grid h-full w-full place-items-center text-[10px] text-white/30">
+                    Aucune
+                  </span>
+                )}
+              </span>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <div className="flex gap-2">
+                  <label className="inline-flex cursor-pointer items-center rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold hover:border-[#FF6A00] hover:text-[#FF6A00]">
+                    {uploading ? "Envoi…" : f.image ? "Remplacer" : "Choisir une image"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      className="hidden"
+                      onChange={onFile}
+                      disabled={uploading}
+                    />
+                  </label>
+                  {f.image && (
+                    <button
+                      type="button"
+                      onClick={() => set("image", "")}
+                      disabled={uploading}
+                      className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-[#ff6b6b] hover:bg-[#ff4d4d]/10 disabled:opacity-50"
+                    >
+                      Retirer
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] text-white/40">JPG, PNG, WebP ou AVIF · 5 Mo max.</span>
+                {imgError && (
+                  <span role="alert" className="text-xs font-bold text-[#ff6b6b]">
+                    {imgError}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
           <label className={`${label} col-span-2`}>
             Résumé (desc)
             <textarea

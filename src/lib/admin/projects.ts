@@ -7,7 +7,7 @@ import type { DetailProject } from "@/components/projects/ProjectDetail";
  * DetailProject utilisé par ProjectCabinet / ProjectDetail.
  */
 
-export type ProjectRecord = DetailProject & { sortOrder: number };
+export type ProjectRecord = DetailProject & { sortOrder: number; updatedAt: string };
 
 /** Projets par défaut, seedés à la première initialisation de la DB. */
 const SEED: DetailProject[] = [
@@ -121,21 +121,24 @@ export async function seedProjectsIfEmpty(): Promise<void> {
 /** Liste ordonnée de tous les projets (pour la page publique et l'admin). */
 export async function listProjects(): Promise<ProjectRecord[]> {
   await initDb();
-  const rs = await db().execute("SELECT data, sort_order FROM projects ORDER BY sort_order ASC");
+  const rs = await db().execute("SELECT data, sort_order, updated_at FROM projects ORDER BY sort_order ASC");
   return rs.rows.map((row) => {
     const data = JSON.parse(String(row.data)) as DetailProject;
-    return { ...data, sortOrder: Number(row.sort_order) };
+    return { ...data, sortOrder: Number(row.sort_order), updatedAt: String(row.updated_at ?? "") };
   });
 }
 
 /** Récupère un projet par son id. */
 export async function getProject(id: string): Promise<ProjectRecord | null> {
   await initDb();
-  const rs = await db().execute({ sql: "SELECT data, sort_order FROM projects WHERE id = ?", args: [id] });
+  const rs = await db().execute({
+    sql: "SELECT data, sort_order, updated_at FROM projects WHERE id = ?",
+    args: [id],
+  });
   const row = rs.rows[0];
   if (!row) return null;
   const data = JSON.parse(String(row.data)) as DetailProject;
-  return { ...data, sortOrder: Number(row.sort_order) };
+  return { ...data, sortOrder: Number(row.sort_order), updatedAt: String(row.updated_at ?? "") };
 }
 
 /** Crée un projet. L'id doit être unique. */

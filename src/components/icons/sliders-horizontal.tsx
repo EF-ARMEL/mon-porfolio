@@ -71,7 +71,7 @@ const SlidersHorizontalIcon = forwardRef<
    (e?: React.MouseEvent<HTMLDivElement>) => {
     if (!isAnimated || reduced) return;
     if (!isControlled.current) controls.start("animate");
-    else onMouseEnter?.(e as any);
+    else onMouseEnter?.(e as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
    },
    [controls, reduced, isAnimated, onMouseEnter],
   );
@@ -79,7 +79,7 @@ const SlidersHorizontalIcon = forwardRef<
   const handleLeave = useCallback(
    (e?: React.MouseEvent<HTMLDivElement>) => {
     if (!isControlled.current) controls.start("normal");
-    else onMouseLeave?.(e as any);
+    else onMouseLeave?.(e as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
    },
    [controls, onMouseLeave],
   );

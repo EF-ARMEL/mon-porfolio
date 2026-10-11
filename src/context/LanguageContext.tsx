@@ -15,15 +15,18 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const { i18n } = useTranslation();
-  const [language, setLanguage] = useState<Language>("fr");
+  const [language, setLanguage] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem("lng") as Language | null;
+      return saved === "en" ? "en" : "fr";
+    } catch {
+      return "fr";
+    }
+  });
 
   useEffect(() => {
-    const savedLng = localStorage.getItem("lng") as Language | null;
-    if (savedLng) {
-      setLanguage(savedLng);
-      i18n.changeLanguage(savedLng);
-    }
-  }, [i18n]);
+    i18n.changeLanguage(language);
+  }, [language, i18n]);
 
   const changeLanguage = (lng: Language) => {
     setLanguage(lng);

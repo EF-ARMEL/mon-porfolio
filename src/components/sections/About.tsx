@@ -756,6 +756,11 @@ const CSS = `/* ================= STYLES DU COMPOSANT (identiques au .tsx) =====
 }
 .abt-mini-ends { display: flex; justify-content: space-between; font: 500 9px/1 var(--abt-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--abt-dim); }
 
+@media (max-width: 719px) {
+  /* Mobile : la ligne horizontale de chaque étape s'arrête là où commence
+     le texte (elle ne traverse plus le numéro vers le bord de l'écran). */
+  .abt-rule { left: calc(clamp(48px, 8vw, 104px) + clamp(14px, 2vw, 28px)); }
+}
 @media (min-width: 720px) {
   .abt-man-label { grid-column: 1 / 4; margin-bottom: 0; padding-top: 0.9em; }
   .abt-man-text { grid-column: 4 / 13; }

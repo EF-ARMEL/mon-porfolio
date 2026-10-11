@@ -57,20 +57,32 @@ export function SettingsTab({ initial }: { initial: boolean }) {
   const [maintenance, setMaintenance] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(false);
 
   const toggle = async () => {
     const next = !maintenance;
-    setMaintenance(next);
     setBusy(true);
     setSaved(false);
+    setError(false);
     try {
-      await fetch("/api/admin/settings", {
+      const res = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ maintenance: next }),
       });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      if (!res.ok || !data?.ok) {
+        // L'API a refusé (session expirée, corps invalide…) : on revient à l'état réel.
+        setMaintenance(!next);
+        setError(true);
+        return;
+      }
+      setMaintenance(next);
       setSaved(true);
       router.refresh();
+    } catch {
+      setMaintenance(!next);
+      setError(true);
     } finally {
       setBusy(false);
     }
@@ -116,6 +128,11 @@ export function SettingsTab({ initial }: { initial: boolean }) {
           {maintenance ? "⚠ Site en maintenance" : "✓ Site en ligne"}
         </p>
         {saved && <p className="mt-2 text-xs text-white/40">Réglage enregistré.</p>}
+        {error && (
+          <p role="alert" className="mt-2 text-xs font-bold text-[#ff6b6b]">
+            Enregistrement impossible. Réessaie (ou reconnecte-toi).
+          </p>
+        )}
       </div>
     </div>
   );

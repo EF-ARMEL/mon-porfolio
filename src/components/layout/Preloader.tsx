@@ -26,7 +26,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     const tl = gsap.timeline({
       onComplete: () => {
         gsap.to(containerRef.current, {
-          duration: 1.2,
+          duration: 0.9,
           opacity: 0,
           ease: "expo.inOut",
           onComplete: () => onComplete(),
@@ -45,19 +45,19 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     tl.set(nousDevRef.current, { opacity: 0, y: 30, scale: 0.95 });
 
     // 1. THE SILENCE
-    tl.to({}, { duration: 0.6 });
+    tl.to({}, { duration: 0.3 });
 
     // 2. THE LINE (The spark)
     tl.to(lineRef.current, {
       opacity: 1,
-      duration: 0.8,
+      duration: 0.5,
       ease: "power2.inOut",
     });
 
     // 3. THE OPENING (Expanding the light)
     tl.to(lineRef.current, {
       scaleX: 1,
-      duration: 1.4,
+      duration: 0.8,
       ease: "expo.inOut",
     });
 
@@ -66,35 +66,35 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      duration: 2,
+      duration: 0.9,
       ease: "power3.out",
-    }, "-=0.8");
+    }, "-=0.6");
 
     // 5. THE BRAND (NOUSDEV)
     tl.to(nousDevRef.current, {
       opacity: 1,
       y: 0,
       scale: 1,
-      duration: 1.5,
+      duration: 0.7,
       ease: "expo.out",
-    }, "+=0.4");
+    }, "+=0.2");
 
     // 6. THE MOMENT OF IMPACT
-    tl.to({}, { duration: 2 });
+    tl.to({}, { duration: 0.4 });
 
     // 7. THE EXIT
     tl.to(lineRef.current, {
       opacity: 0,
-      duration: 1,
+      duration: 0.6,
       ease: "power2.inOut",
     });
 
     tl.to([quoteRef.current, nousDevRef.current], {
       y: -20,
       opacity: 0,
-      duration: 1,
+      duration: 0.6,
       ease: "power2.in",
-    }, "-=0.5");
+    }, "-=0.35");
 
   }, { scope: containerRef });
 

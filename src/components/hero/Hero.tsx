@@ -5,6 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import ConductorButton from "@/components/ConductorButton";
+import { getLenis } from "@/components/providers/SmoothScrollProvider";
 
 interface HeroProps {
   startAnimation?: boolean;
@@ -20,7 +21,6 @@ export default function Hero({ startAnimation = false }: HeroProps) {
   const photoRef = useRef<HTMLImageElement>(null); // intro + respiration
   const leftParaRef = useRef<HTMLParagraphElement>(null);
   const rightParaRef = useRef<HTMLParagraphElement>(null);
-  const socialRefs = useRef<(HTMLDivElement | null)[]>([]);
   const ctaButtonRef = useRef<HTMLButtonElement>(null);
 
   /* ---------- Fit-text : « Nousdev » = 100 % de la largeur ---------- */
@@ -63,7 +63,6 @@ export default function Hero({ startAnimation = false }: HeroProps) {
 
       const letters = gsap.utils.toArray<HTMLElement>(".letter-block");
       const paras = [leftParaRef.current, rightParaRef.current].filter(Boolean);
-      const socials = socialRefs.current.filter(Boolean);
 
       // États initiaux : On utilise un masquage plus moderne et un léger décalage
       gsap.set(letters, {
@@ -79,7 +78,6 @@ export default function Hero({ startAnimation = false }: HeroProps) {
         filter: "blur(20px) saturate(0) brightness(0.5)",
       });
       gsap.set(paras, { y: 30, opacity: 0 });
-      gsap.set(socials, { scale: 0, opacity: 0 });
       gsap.set(ctaButtonRef.current, { opacity: 0, y: 20 });
       gsap.set(".cta-arrow", { rotation: -360 });
       gsap.set(containerRef.current, { visibility: "visible" });
@@ -132,14 +130,6 @@ export default function Hero({ startAnimation = false }: HeroProps) {
         ease: "power4.out"
       }, 1.8);
 
-      tl.to(socials, {
-        scale: 1,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "back.out(1.7)"
-      }, 2.0);
-
       tl.to(
         ctaButtonRef.current,
         { opacity: 1, y: 0, duration: 1, ease: "power4.out" },
@@ -154,6 +144,15 @@ export default function Hero({ startAnimation = false }: HeroProps) {
     },
     { dependencies: [startAnimation], scope: containerRef }
   );
+
+  /* ---------- CTA → contact ---------- */
+  const scrollToContact = () => {
+    const target = document.getElementById("contact");
+    if (!target) return;
+    const lenis = getLenis();
+    if (lenis) lenis.scrollTo(target, { duration: 1.6 });
+    else target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   /* ---------- Parallaxe souris (desktop) ---------- */
   useGSAP(
@@ -249,14 +248,15 @@ export default function Hero({ startAnimation = false }: HeroProps) {
             <ConductorButton align="right" />
             <button
               ref={ctaButtonRef}
-              className="group relative overflow-hidden rounded-full bg-brand-orange px-6 py-3 font-bold text-brand-black mt-6"
+              onClick={scrollToContact}
+              className="group relative overflow-hidden rounded-full bg-brand-orange px-6 py-3 font-bold text-brand-black mt-6 transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-95"
             >
               <span
                 aria-hidden="true"
                 className="absolute inset-0 translate-y-full bg-white transition-transform duration-300 ease-out group-hover:translate-y-0"
               />
               <span className="relative z-10 flex items-center gap-2">
-                Parlons-en
+                Discutons
                 <span className="inline-block transition-transform duration-300 group-hover:rotate-45">
                   <span className="cta-arrow inline-block">↗</span>
                 </span>

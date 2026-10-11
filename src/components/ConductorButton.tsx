@@ -18,6 +18,17 @@ export default function ConductorButton({
 }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const closeOnScroll = useRef<(() => void) | null>(null);
+
+  // Le panneau ouvert (surtout au clic sur mobile) ne doit pas survivre
+  // au défilement : il restait une boîte violette flottante sur les sections suivantes.
+  useEffect(
+    () => () => {
+      if (closeOnScroll.current) window.removeEventListener("scroll", closeOnScroll.current);
+    },
+    []
+  );
   const tl = useRef<gsap.core.Timeline | null>(null);
   const pointerType = useRef<string>("mouse");
 
@@ -98,8 +109,32 @@ export default function ConductorButton({
     return () => ctx.revert();
   }, []);
 
-  const open = () => tl.current?.play();
-  const close = () => tl.current?.reverse();
+  /** Ouvre le panneau au-dessus du bouton s'il ne passe pas sous le viewport (mobile). */
+  const placePanel = () => {
+    const p = panel.current;
+    const b = btn.current;
+    if (!p || !b) return;
+    const r = b.getBoundingClientRect();
+    const h = p.offsetHeight || 260;
+    const flip = window.innerHeight - r.bottom < h + 16 && r.top > h + 16;
+    p.classList.toggle("above", flip);
+  };
+
+  const open = () => {
+    placePanel();
+    tl.current?.play();
+    if (!closeOnScroll.current) {
+      closeOnScroll.current = () => close();
+      window.addEventListener("scroll", closeOnScroll.current, { passive: true, once: true });
+    }
+  };
+  const close = () => {
+    tl.current?.reverse();
+    if (closeOnScroll.current) {
+      window.removeEventListener("scroll", closeOnScroll.current);
+      closeOnScroll.current = null;
+    }
+  };
 
   return (
     <div
@@ -115,6 +150,7 @@ export default function ConductorButton({
       onBlur={close}
       onKeyDown={(e) => e.key === "Escape" && close()}
     >
+      <style>{`.panel.above { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 1.5rem; }`}</style>
       <button
         ref={btn}
         type="button"
@@ -134,6 +170,7 @@ export default function ConductorButton({
 
       {/* Panneau Cinématique */}
       <div
+        ref={panel}
         id="conductor-panel"
         role="tooltip"
         className={`panel pointer-events-none absolute top-full z-50 mt-6 w-[min(36rem,90vw)] overflow-hidden rounded-[32px] ${

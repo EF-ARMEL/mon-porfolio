@@ -13,14 +13,14 @@ const WORDS = ["Collab-", "orer", "avec", "nousdev"];
 const FIELDS = [
   { id: "nom", label: "Nom", type: "text" },
   { id: "email", label: "Email", type: "email" },
-  { id: "tel", label: "Téléphone", type: "tel" },
-  { id: "projet", label: "Type de projet", type: "text" },
+  { id: "tel", label: "Téléphone (facultatif)", type: "tel" },
+  { id: "projet", label: "Sujet", type: "text" },
 ] as const;
 
 const inputBase =
   "mt-1 block w-full rounded-2xl bg-[#ECE8DD] px-3.5 text-base outline-none transition-shadow focus:ring-2 focus:ring-[#FF6A3D]";
 const inputCls = `${inputBase} h-10 md:h-[clamp(36px,5vh,48px)]`;
-const textareaCls = `${inputBase} h-16 md:h-[clamp(52px,8vh,84px)] resize-none py-3`;
+const textareaCls = `${inputBase} h-20 md:h-[clamp(52px,8vh,84px)] resize-none py-3`;
 const labelCls = "block text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-600";
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
@@ -74,13 +74,24 @@ export default function ContactScene() {
 
       /* ───────── MOBILE : formulaire seul, plein écran ───────── */
       mm.add("(max-width: 767px) and (prefers-reduced-motion: no-preference)", () => {
+        // Mobile : pas de pin. Le pin dépend d'un footer assez haut pour
+        // "payer" la distance de scroll ; sur petit écran la page n'y arrive pas,
+        // le formulaire restait à moitié hors du viewport et le bouton Envoyer
+        // devenait inatteignable. On joue la même séquence, scrubbée sur
+        // l'entrée naturelle de la section dans le viewport.
         gsap
-          .timeline({ scrollTrigger: { ...st, end: "+=1800" } })
+          .timeline({
+            scrollTrigger: {
+              trigger: root.current,
+              start: "top bottom",
+              end: "top 20%",
+              scrub: 1,
+            },
+          })
           .from(".title-line", { yPercent: 110, stagger: 0.12, duration: 1, ease: "power4.out" })
-          .to(".title-wrap", { opacity: 0.15, scale: 0.92, duration: 1 }, ">+0.3")
-          .fromTo(".phone", { yPercent: 88 }, { yPercent: 0, duration: 1.4, ease: "power3.out" }, "<");
-        // Aucun masquage du formulaire sur mobile : titre, champs et bouton
-        // sont visibles dès que le téléphone entre — pas de scroll pour les voir.
+          .to(".title-wrap", { opacity: 0.15, scale: 0.92, duration: 0.8 }, ">+0.2")
+          .fromTo(".phone", { yPercent: 88 }, { yPercent: 0, duration: 1, ease: "power3.out" }, "<");
+        // Formulaire atteignable au scroll normal, bouton Envoyer toujours visible.
       });
 
       return () => mm.revert();
@@ -116,7 +127,7 @@ export default function ContactScene() {
           ))}
         </h1>
         <p className="tagline absolute bottom-12 left-6 max-w-xs text-lg text-[#E9E4D8] md:left-16">
-          Décrivez votre projet. Un développeur vous répond.
+          Une question, une idée, une envie de projet ? Écris-nous, on te répond vite.
         </p>
       </div>
 
@@ -138,12 +149,12 @@ export default function ContactScene() {
                 <p className="font-[family-name:var(--font-archivo)] text-5xl uppercase leading-[0.9]">
                   Message<br />envoyé
                 </p>
-                <p className="mt-4 text-neutral-600">Merci. Un développeur vous répond très vite.</p>
+                <p className="mt-4 text-neutral-600">Merci ! On a bien reçu ton message — on te répond très vite.</p>
               </div>
             ) : (
               <>
                 <h2 className="screen-title mb-3 font-[family-name:var(--font-archivo)] text-2xl text-[#141414]! md:text-[clamp(22px,3.8vh,36px)] uppercase leading-none md:mb-[clamp(10px,2vh,20px)]">
-                  Nouveau<br />projet
+                  Écris<br />nous
                 </h2>
                 <div className="space-y-2 md:space-y-[clamp(4px,1vh,10px)]">
                   {FIELDS.map((f) => (
@@ -155,19 +166,19 @@ export default function ContactScene() {
                   ))}
                   <div className="field flex gap-3.5">
                     <label className={`flex-1 ${labelCls}`}>
-                      Budget
+                      Budget (facultatif)
                       <input name="budget" defaultValue={state.values?.budget} aria-invalid={!!state.errors?.budget} className={inputCls} />
                       <Err m={state.errors?.budget} />
                     </label>
                     <label className={`flex-1 ${labelCls}`}>
-                      Délai
+                      Délai (facultatif)
                       <input name="delai" defaultValue={state.values?.delai} aria-invalid={!!state.errors?.delai} className={inputCls} />
                       <Err m={state.errors?.delai} />
                     </label>
                   </div>
                   <label className={`field ${labelCls}`}>
                     Message
-                    <textarea name="message" defaultValue={state.values?.message} aria-invalid={!!state.errors?.message} className={`${textareaCls} resize-none py-3`} />
+                    <textarea name="message" placeholder="Ta question, ton idée ou ton projet — dis-nous en quelques mots." defaultValue={state.values?.message} aria-invalid={!!state.errors?.message} className={`${textareaCls} resize-none py-3`} />
                     <Err m={state.errors?.message} />
                   </label>
                 </div>

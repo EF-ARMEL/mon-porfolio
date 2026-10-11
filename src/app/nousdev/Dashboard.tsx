@@ -29,6 +29,11 @@ export default function Dashboard(props: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("messages");
   const [unread, setUnread] = useState(props.initialUnread);
+  // Badge : messages non lus + réussites au quiz (visibles même sans ouvrir l'onglet).
+  const badges: Partial<Record<Tab, number>> = {
+    messages: unread,
+    quiz: props.initialResults.length,
+  };
 
   const logout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -66,13 +71,13 @@ export default function Dashboard(props: Props) {
               }`}
             >
               {t.label}
-              {t.key === "messages" && unread > 0 && (
+              {(badges[t.key] ?? 0) > 0 && (
                 <span
                   className={`ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                     tab === t.key ? "bg-black text-[#FF6A00]" : "bg-[#FF6A00] text-black"
                   }`}
                 >
-                  {unread}
+                  {badges[t.key]}
                 </span>
               )}
             </button>

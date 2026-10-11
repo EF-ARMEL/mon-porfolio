@@ -5,8 +5,19 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+/* Instance Lenis accessible pour les défilements programmatiques
+   (le type global `window.lenis` de lenis est trop restrictif : on garde
+   notre propre référence typée). */
+let lenisInstance: Lenis | null = null;
+export const getLenis = (): Lenis | null => lenisInstance;
+
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    // Sur mobile, le redressement de la barre d'adresse provoque un resize
+    // en plein scroll : sans ce réglage, ScrollTrigger refresh au mauvais
+    // moment et les sections épinglées sautent / restent bloquées.
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     // Initialize Lenis
     const lenis = new Lenis({
       duration: 1.2,
@@ -21,6 +32,9 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
 
     // Sync ScrollTrigger with Lenis
     lenis.on('scroll', ScrollTrigger.update);
+
+    // Instance exposée pour les défilements programmatiques (ex. bouton Hero → contact).
+    lenisInstance = lenis;
 
     // Les composants se montent après l'événement load : ScrollTrigger a
     // calculé ses positions sur un layout non stabilisé (images/polices non
@@ -40,6 +54,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       window.removeEventListener('load', refresh);
       clearTimeout(t1);
       clearTimeout(t2);
+      lenisInstance = null;
       lenis.destroy();
       gsap.ticker.remove(lenis.raf);
     };

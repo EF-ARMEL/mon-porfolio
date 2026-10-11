@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Preloader from "@/components/layout/Preloader";
 import Hero from "@/components/hero/Hero";
 import About from "@/components/sections/About";
@@ -15,6 +15,15 @@ import type { ProjectRecord } from "@/lib/admin/projects";
 
 export default function Home({ projects }: { projects: ProjectRecord[] }) {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filet de sécurité : le preloader masque le site entier (opacity-0).
+  // Si l'animation GSAP ne se termine jamais (JS bloqué, onglet gelé…),
+  // on révèle le site quand même au lieu d'un écran noir infini.
+  useEffect(() => {
+    if (!isLoading) return;
+    const failsafe = setTimeout(() => setIsLoading(false), 14000);
+    return () => clearTimeout(failsafe);
+  }, [isLoading]);
 
   return (
     <>

@@ -11,7 +11,7 @@ export function shuffle<T>(a: T[]): T[] {
     .map((p) => p[1]);
 }
 
-export function buildDeck(track: string, questions: any[]): Opt[][] {
+export function buildDeck(track: string, questions: { answers: string[] }[]): Opt[][] {
   return questions.map(({ answers }) =>
     shuffle(answers.map((t: string, k: number) => ({ t, ok: k === 0 })))
   );

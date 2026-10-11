@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { useTheme } from "@/context/ThemeContext";
 
 export default function ThemeCord() {
-  const { theme, toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   const cordRef = useRef<SVGPathElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,10 +41,12 @@ export default function ThemeCord() {
     setIsDragging(true);
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDragging) return;
 
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Prefer TouchEvent when a touch is active, otherwise fall back to MouseEvent.clientY
+    const clientY =
+      (e as React.TouchEvent).touches?.[0]?.clientY ?? (e as React.MouseEvent).clientY;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
