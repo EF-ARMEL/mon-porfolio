@@ -5,6 +5,8 @@ import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   createSessionToken,
+  hashPassword,
+  verifyAgainstHash,
   verifyPassword,
   verifySessionToken,
 } from "@/lib/admin/auth";
@@ -26,6 +28,29 @@ describe("verifyPassword", () => {
     process.env.ADMIN_PASSWORD_HASH = "md5:abcdef";
     expect(verifyPassword(TEST_PASSWORD)).toBe(false);
     process.env.ADMIN_PASSWORD_HASH = original;
+  });
+});
+
+describe("hachage de mot de passe", () => {
+  it("hashPassword produit un hachage vérifiable par verifyAgainstHash", () => {
+    const stored = hashPassword("NouveauMot2026!");
+    expect(stored.startsWith("scrypt:")).toBe(true);
+    expect(verifyAgainstHash("NouveauMot2026!", stored)).toBe(true);
+    expect(verifyAgainstHash("mauvais", stored)).toBe(false);
+    expect(verifyAgainstHash("", stored)).toBe(false);
+  });
+
+  it("refuse les hachages absents ou au mauvais format", () => {
+    expect(verifyAgainstHash("x", undefined)).toBe(false);
+    expect(verifyAgainstHash("x", null)).toBe(false);
+    expect(verifyAgainstHash("x", "")).toBe(false);
+    expect(verifyAgainstHash("x", "md5:abcdef")).toBe(false);
+    expect(verifyAgainstHash("x", "scrypt:")).toBe(false);
+    expect(verifyAgainstHash("x", "scrypt:zz-not-hex")).toBe(false);
+  });
+
+  it("le hachage d'un autre mot de passe ne vérifie pas le premier", () => {
+    expect(verifyAgainstHash("un mot de passe", hashPassword("un autre mot de passe"))).toBe(false);
   });
 });
 

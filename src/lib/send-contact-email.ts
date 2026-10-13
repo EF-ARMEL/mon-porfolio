@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { mailFrom } from '@/lib/smtp';
 
 interface ContactData {
   nom: string;
@@ -33,7 +34,7 @@ export async function sendContactEmail(data: ContactData) {
   });
 
   const mailOptions = {
-    from: process.env.MAIL_FROM || '"Portfolio NousDev" <noreply@nousdev.com>',
+    from: mailFrom(),
     // Destinataire : MAIL_TO si défini, sinon l'expéditeur SMTP lui-même.
     to: process.env.MAIL_TO || process.env.SMTP_USER || 'votre-email@exemple.com',
     subject: `🚀 Nouveau projet : ${data.projet} - ${data.nom}`,

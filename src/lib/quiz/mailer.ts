@@ -1,39 +1,9 @@
-import nodemailer, { type Transporter } from "nodemailer";
+import nodemailer from "nodemailer";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getTransporter, mailFrom } from "@/lib/smtp";
 
 const PDF_PATH = path.join(process.cwd(), "private", "ettien-franck-armel-nousdev.pdf");
-
-let cached: Promise<Transporter> | null = null;
-
-function getTransporter(): Promise<Transporter> {
-  if (cached) return cached;
-  cached = (async () => {
-    const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS } = process.env;
-    if (SMTP_HOST) {
-      const port = Number(SMTP_PORT ?? 465);
-      return nodemailer.createTransport({
-        host: SMTP_HOST,
-        port,
-        secure: SMTP_SECURE ? SMTP_SECURE === "true" : port === 465,
-        auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-      });
-    }
-    if (process.env.NODE_ENV === "production") throw new Error("SMTP_HOST manquant en production.");
-    const acc = await nodemailer.createTestAccount();
-    console.warn("[quiz] SMTP non configuré : boîte de test Ethereal utilisée (aucun vrai e-mail n'est envoyé).");
-    return nodemailer.createTransport({
-      host: acc.smtp.host,
-      port: acc.smtp.port,
-      secure: acc.smtp.secure,
-      auth: { user: acc.user, pass: acc.pass },
-    });
-  })();
-  cached.catch(() => {
-    cached = null;
-  });
-  return cached;
-}
 
 const SUBJECT = "Ta récompense de Nousdev";
 
@@ -58,7 +28,7 @@ export async function sendRewardMail(to: string) {
   const pdf = await readFile(PDF_PATH);
   const transporter = await getTransporter();
   const info = await transporter.sendMail({
-    from: process.env.MAIL_FROM ?? "Nousdev <no-reply@localhost>",
+    from: mailFrom(),
     to,
     subject: SUBJECT,
     text: TEXT,

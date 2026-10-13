@@ -1,5 +1,6 @@
 import { createHmac, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { initDb, getSetting } from "@/lib/db";
 
 /**
  * Authentification admin : un seul compte.
@@ -21,17 +22,43 @@ function sessionSecret(): string {
   return s;
 }
 
-/** Vérifie le mot de passe saisi contre ADMIN_PASSWORD_HASH (format scrypt:hash de scripts/hash-password.mjs). */
-export function verifyPassword(entered: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD_HASH;
-  if (!expected) return false;
-  const [scheme, hashHex] = expected.split(":");
+/** Vérifie un mot de passe contre UN hachage scrypt:hex donné. */
+export function verifyAgainstHash(entered: string, stored: string | undefined | null): boolean {
+  if (!stored) return false;
+  const [scheme, hashHex] = stored.split(":");
   if (scheme !== "scrypt" || !hashHex) return false;
   const expectedBuf = Buffer.from(hashHex, "hex");
+  if (expectedBuf.length === 0) return false;
   // Sel fixe dérivé du secret de session : le hachage reste vérifiable sans stocker le sel à part.
   const salt = Buffer.from(sessionSecret().slice(0, 32));
   const enteredBuf = scryptSync(entered, salt, expectedBuf.length);
   return enteredBuf.length === expectedBuf.length && timingSafeEqual(enteredBuf, expectedBuf);
+}
+
+/** Vérifie le mot de passe saisi contre ADMIN_PASSWORD_HASH (format scrypt:hash de scripts/hash-password.mjs). */
+export function verifyPassword(entered: string): boolean {
+  return verifyAgainstHash(entered, process.env.ADMIN_PASSWORD_HASH);
+}
+
+/**
+ * Hache un mot de passe au format scrypt (même dérivation que
+ * scripts/hash-password.mjs) pour un stockage en base.
+ */
+export function hashPassword(entered: string): string {
+  const salt = Buffer.from(sessionSecret().slice(0, 32));
+  return `scrypt:${scryptSync(entered, salt, 64).toString("hex")}`;
+}
+
+/**
+ * Mot de passe de connexion : le hachage changé depuis le dashboard
+ * (clé `admin_password_hash` en base) prime sur ADMIN_PASSWORD_HASH.
+ * Utilisé par la connexion ET par le changement de mot de passe.
+ */
+export async function verifyCurrentPassword(entered: string): Promise<boolean> {
+  await initDb();
+  const stored = await getSetting("admin_password_hash");
+  if (stored) return verifyAgainstHash(entered, stored);
+  return verifyPassword(entered);
 }
 
 function sign(payload: string): string {

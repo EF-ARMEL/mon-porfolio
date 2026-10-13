@@ -72,6 +72,15 @@ export async function initDb(): Promise<void> {
            track      TEXT,
            created_at TEXT NOT NULL DEFAULT (datetime('now'))
          )`,
+        // Défi de double authentification (code 6 chiffres haché, voir lib/admin/twofa.ts).
+        `CREATE TABLE IF NOT EXISTS admin_challenges (
+           id         TEXT PRIMARY KEY,
+           code_hash  TEXT NOT NULL,
+           attempts   INTEGER NOT NULL DEFAULT 0,
+           expires_at INTEGER NOT NULL,
+           consumed   INTEGER NOT NULL DEFAULT 0,
+           created_at TEXT NOT NULL DEFAULT (datetime('now'))
+         )`,
         // Index pour les listes triées par date.
         `CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at DESC)`,
         `CREATE INDEX IF NOT EXISTS idx_quiz_created ON quiz_results(created_at DESC)`,

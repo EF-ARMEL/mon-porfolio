@@ -96,6 +96,20 @@ Le système d'authentification devra être choisi avant l'implémentation finale
 
 Ne pas créer un système d'authentification maison si une solution fiable adaptée au stack existe.
 
+## Implémentation actuelle
+
+Le portfolio utilise un compte admin unique avec session signée (`src/lib/admin/…`) :
+
+* **Connexion** : `POST /api/admin/login` vérifie le mot de passe (scrypt) contre `ADMIN_PASSWORD_HASH` — ou contre le hachage changé depuis le dashboard (clé `admin_password_hash` en base, qui prime) ;
+* **Double authentification (2FA) par e-mail** : si `ADMIN_2FA_EMAIL` (secours : `MAIL_TO`, `SMTP_USER`) est renseigné, l'étape 1 renvoie un `challengeId` et envoie un code à 6 chiffres par e-mail (valable 10 minutes, 5 tentatives max, stocké haché dans la table `admin_challenges`). La session n'est créée qu'après `POST /api/admin/login/verify`. Sans adresse e-mail résolue, la connexion reste mot de passe seule ;
+* **Changement de mot de passe** : onglet *Réglages* du dashboard (carte « Changer le mot de passe »), `POST /api/admin/password` (session requise) vérifie le mot de passe actuel puis stocke le nouveau hachage en base ;
+* **Session** : cookie `nd_admin_session`, httpOnly, signé HMAC, expiration 7 jours ;
+* **Déconnexion** : `POST /api/admin/logout` ;
+* **Protection des routes** : `requireAdmin()` renvoie 401 ; `/nousdev` redirige vers `/nousdev/login` ;
+* **Limitation de débit** : 5 tentatives de connexion / 10 min par IP, 10 tentatives de code / 10 min par IP.
+
+Variables associées (`.env.example`) : `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD_HASH`, `ADMIN_2FA_EMAIL`, `SMTP_*`, `MAIL_FROM`. Sans `SMTP_*`, un serveur de test Ethereal reçoit les e-mails en développement (URL d'aperçu loguée).
+
 ---
 
 # 5. Autorisation

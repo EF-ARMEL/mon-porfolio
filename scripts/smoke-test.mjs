@@ -72,6 +72,14 @@ async function main() {
   const bad = await req("/api/admin/login", { method: "POST", body: { password: "faux" }, withAuth: false });
   check("Mauvais mot de passe → 401", bad.res.status === 401, `reçu ${bad.res.status}`);
   const good = await req("/api/admin/login", { method: "POST", body: { password: PASSWORD }, withAuth: false });
+  if (good.res.status === 200 && good.json?.twoFactor) {
+    //2FA active : la connexion renvoie un challengeId, pas de cookie.
+    // Le script ne peut pas lire le code reçu par e-mail → arrêt explicite.
+    console.error("✗ Connexion : double authentification par e-mail active.");
+    console.error("  Le smoke test ne peut pas lire ta boîte mail : désactive ADMIN_2FA_EMAIL");
+    console.error("  (et MAIL_TO / SMTP_USER) le temps du test, puis relance-le.");
+    process.exit(2);
+  }
   check("Bon mot de passe → 200 + cookie", good.res.status === 200 && cookie.includes("nd_admin_session="));
   check("Cookie httpOnly", (good.res.headers.get("set-cookie") ?? "").toLowerCase().includes("httponly"));
 

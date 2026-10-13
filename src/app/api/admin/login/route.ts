@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { verifyPassword, createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/admin/auth";
+import { verifyCurrentPassword, createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/admin/auth";
+import { createChallenge, twoFactorEmail, maskEmail, sendLoginCodeMail } from "@/lib/admin/twofa";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,13 @@ function rateLimit(key: string, max: number, windowMs: number) {
   return true;
 }
 
+/**
+ * Étape 1 de la connexion :
+ * -2FA désactivée (aucune adresse e-mail résolue) → session immédiate (ancien comportement).
+ * -2FA activée → envoie un code à6 chiffres par e-mail et retourne
+ *   { twoFactor: true, challengeId } SANS cookie ; la session est créée par
+ *   POST /api/admin/login/verify.
+ */
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!rateLimit(`login:${ip}`, 5, 10 * 60 * 1000)) {
@@ -26,11 +34,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid_request" }, { status: 400 });
   }
 
-  if (!verifyPassword(password)) {
+  if (!(await verifyCurrentPassword(password))) {
     return NextResponse.json({ ok: false, error: "invalid_credentials" }, { status: 401 });
   }
 
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, createSessionToken(), sessionCookieOptions);
-  return res;
+  const email = twoFactorEmail();
+  if (!email) {
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(SESSION_COOKIE, createSessionToken(), sessionCookieOptions);
+    return res;
+  }
+
+  try {
+    const challenge = await createChallenge();
+    await sendLoginCodeMail(email, challenge.code);
+    return NextResponse.json({
+      ok: true,
+      twoFactor: true,
+      challengeId: challenge.id,
+      email: maskEmail(email),
+    });
+  } catch (err) {
+    console.error("[2FA] Échec d'envoi du code :", err);
+    return NextResponse.json({ ok: false, error: "email_failed" }, { status: 500 });
+  }
 }
