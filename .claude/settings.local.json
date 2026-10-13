@@ -19,7 +19,10 @@
       "WebFetch(domain:medium.com)",
       "Bash(npm i *)",
       "Bash(node *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_resize"
     ]
   },
   "enabledMcpjsonServers": [
