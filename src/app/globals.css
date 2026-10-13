@@ -14,9 +14,16 @@
   --color-text-discrete: #A3A3A3;
 
   /* Typography */
-  --font-heading: "Archivo Black", sans-serif;
-  --font-body: "Inter", "Manrope", "DM Sans", sans-serif;
+  /* --font-archivo-black est fourni par next/font (layout.tsx) : c'est la
+     vraie Archivo Black du design system. Les chaînes ci-dessous gardent des
+     replis système au cas où le webfont ne serait pas disponible. */
+  --font-heading: var(--font-archivo-black), "Archivo Black", "Arial Black", sans-serif;
+  --font-body: var(--font-inter), "Inter", "Manrope", "DM Sans", sans-serif;
   --font-anton: "Anton", sans-serif;
+  /* Référence utilisée par les classes font-[family-name:var(--font-archivo)]
+     (titres admin, section projets, contact…) : même pile d'affichage que
+     les composants qui déclarent leur propre --pc-display / --abt-display. */
+  --font-archivo: var(--font-archivo-black), "Archivo Black", "Arial Black", Impact, sans-serif;
 }
 
 :root {
@@ -53,6 +60,10 @@ body {
   overflow-x: hidden;
   background-color: transparent;
   color: var(--text-main);
+  /* Archivo Black n'a qu'une seule graisse : pas de faux-gras synthétique
+     par-dessus (les titres restent nets quelle que soit la valeur de
+     font-weight demandée par une classe utilitaire). */
+  font-synthesis-weight: none;
 }
 
 /* Lenis Smooth Scroll Fixes */

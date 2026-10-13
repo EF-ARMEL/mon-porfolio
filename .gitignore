@@ -45,3 +45,7 @@ yarn-error.log*
 next-env.d.ts
 .aidesigner/*
 !.aidesigner/.gitkeep
+
+# secrets locaux et artifacts de test
+vercel-secrets/
+.playwright-mcp/

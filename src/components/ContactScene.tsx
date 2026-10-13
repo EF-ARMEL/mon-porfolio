@@ -10,88 +10,85 @@ import { sendContact, type ContactState } from "@/app/actions/contact";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const WORDS = ["Collab-", "orer", "avec", "nousdev"];
-const FIELDS = [
-  { id: "nom", label: "Nom", type: "text" },
-  { id: "email", label: "Email", type: "email" },
-  { id: "tel", label: "Téléphone (facultatif)", type: "tel" },
-  { id: "projet", label: "Sujet", type: "text" },
-] as const;
 
-const inputBase =
-  "mt-1 block w-full rounded-2xl bg-[#ECE8DD] px-3.5 text-base outline-none transition-shadow focus:ring-2 focus:ring-[#FF6A3D]";
-const inputCls = `${inputBase} h-10 md:h-[clamp(36px,5vh,48px)]`;
-const textareaCls = `${inputBase} h-20 md:h-[clamp(52px,8vh,84px)] resize-none py-3`;
-const labelCls = "block text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-600";
+type FieldDef = { id: "nom" | "email" | "tel" | "projet"; label: string; type: string; placeholder?: string };
+
+const FIELDS: FieldDef[] = [
+  { id: "nom", label: "Nom", type: "text", placeholder: "Jean Dupont" },
+  { id: "email", label: "Email", type: "email", placeholder: "jean@mail.fr" },
+  { id: "tel", label: "Téléphone", type: "tel", placeholder: "+33 6 12 34 56" },
+  { id: "projet", label: "Sujet", type: "text", placeholder: "Vitrine, SaaS…" },
+];
+
+const BUDGETS = ["< 2 000 €", "2 000 – 5 000 €", "5 000 – 10 000 €", "> 10 000 €", "À définir"];
+const DELAIS = ["Urgent (< 1 mois)", "Dans 1 mois", "2 – 3 mois", "Flexible"];
+
+const boxCls =
+  "block w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-[#ECEAF4] outline-none transition-all duration-300 placeholder:text-white/25 focus:border-[#FF6A00] focus:bg-white/[0.06]";
+const inputCls = `mt-2 ${boxCls}`;
+const labelCls =
+  "block text-[10px] font-bold uppercase tracking-[0.28em] text-white/45 transition-colors duration-300 group-focus-within:text-[#FF6A00]";
+
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 function Err({ m }: { m?: string }) {
   return m ? (
-    <span role="alert" className="mt-1 block text-xs font-bold normal-case tracking-normal text-[#C2370E]">{m}</span>
+    <span role="alert" className="mt-1.5 block text-xs font-bold text-[#FF8A6A]">
+      {m}
+    </span>
   ) : null;
+}
+
+function Chevron() {
+  return (
+    <svg
+      className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 export default function ContactScene() {
   const root = useRef<HTMLElement>(null);
   const [state, formAction, pending] = useActionState<ContactState, FormData>(sendContact, { ok: false });
 
+  /* Révélation à l'entrée de la section (une seule fois), sans pin :
+     le formulaire reste dans le flux naturel de la page. */
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
-      const st = { trigger: root.current, start: "top top", scrub: 1, pin: true, anticipatePin: 1 };
 
-      /* ───────── DESKTOP : séquence cinéma ───────── */
-      mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
-        gsap.set(".phone", { xPercent: 0 });
-        gsap.set(".tilt", {});
-        gsap.set(".panel", { scaleX: 2, transformOrigin: "left center" });
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const intro = gsap.timeline({
+          scrollTrigger: { trigger: root.current, start: "top 65%", once: true },
+          defaults: { ease: "expo.out" },
+        });
 
-        // 1. Ouverture au chargement : le titre se compose lettre par lettre
-        gsap.from(".ch", { yPercent: 120, rotate: 6, stagger: 0.035, duration: 1.1, ease: "expo.out", delay: 0.2 });
-        gsap.from(".tagline", { opacity: 0, y: 20, duration: 1, delay: 1.1 });
+        intro
+          .from("[data-kicker]", { opacity: 0, x: -16, duration: 0.7 }, 0)
+          .from(".ch", { yPercent: 120, rotate: 6, stagger: 0.03, duration: 1 }, 0.05)
+          .from("[data-line]", { scaleX: 0, duration: 1.1, ease: "expo.inOut" }, 0.35)
+          .from(".tagline", { opacity: 0, y: 18, duration: 0.8 }, 0.45)
+          .from(".panel", { opacity: 0, y: 44, duration: 1 }, 0.15)
+          .from(".screen-title", { opacity: 0, y: 20, duration: 0.6 }, 0.5)
+          .from(".field", { opacity: 0, y: 24, stagger: 0.07, duration: 0.55, ease: "power3.out" }, 0.6)
+          .from(".submit", { opacity: 0, y: 16, duration: 0.5, ease: "power3.out" }, ">-0.15");
 
-        // 2. Scroll : le rideau noir se retire, le téléphone entre en 3D depuis la gauche
-        //    et se pose COLLÉ À DROITE, puis la caméra pousse (grand + large).
-        const tl = gsap.timeline({ scrollTrigger: { ...st, end: "+=4200" } });
-        tl.to(".panel", { scaleX: 1, duration: 1.4, ease: "power4.inOut" }, 0)
-          .fromTo(".phone", { yPercent: 95, scale: 0.7, xPercent: -18, rotationX: 0 }, { yPercent: 0, scale: 1, xPercent: 0, rotationX: 0, duration: 2.4, ease: "power3.out" }, 0.4)
-          .fromTo(".shadow", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 2.4 }, 0.4)
-          .fromTo(".glare", { xPercent: -140 }, { xPercent: 140, duration: 2.4, ease: "power2.inOut" }, 0.4)
-          .to(".title-wrap", { xPercent: -15, scale: 0.92, transformOrigin: "left top", duration: 3, ease: "none" }, 0)
-          // le formulaire se révèle pendant la montée du téléphone (jamais de long écran vide)
-          .from(".screen-title", { opacity: 0, y: 24, duration: 0.5, ease: "power3.out" }, 1.3)
-          .from(".field", { opacity: 0, y: 26, stagger: 0.07, duration: 0.45, ease: "power3.out" }, 1.5)
-          .from(".submit", { opacity: 0, y: 18, scale: 0.94, duration: 0.5, ease: "power3.out" }, 2.0)
-          // une fois posé : caméra qui pousse → le téléphone occupe toute la partie droite
-          .to(".phone", { scale: 1.07, duration: 1.2, ease: "power1.inOut" }, 2.8)
-          // balayage de « focus » champ par champ, comme un curseur qui remplit le formulaire
-          .to(".field input, .field textarea", { boxShadow: "inset 0 0 0 2px #FF6A3D", backgroundColor: "#fff", stagger: 0.16, duration: 0.25, yoyo: true, repeat: 1 }, 3.0)
-          .to(".submit", { backgroundColor: "#FF6A3D", scale: 1.04, duration: 0.45, yoyo: true, repeat: 1 }, ">");
+        // Bandeau « Disponible… » en parallaxe horizontale (lié au scroll).
+        gsap.to(".marquee", {
+          xPercent: -30,
+          ease: "none",
+          scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
+        });
 
-        // 3. Texte-fantôme qui défile derrière le téléphone, lié au scroll
-        gsap.to(".marquee", { xPercent: -40, ease: "none", scrollTrigger: { ...st, pin: false, end: "+=4200", scrub: true } });
-      });
-
-      /* ───────── MOBILE : formulaire seul, plein écran ───────── */
-      mm.add("(max-width: 767px) and (prefers-reduced-motion: no-preference)", () => {
-        // Mobile : pas de pin. Le pin dépend d'un footer assez haut pour
-        // "payer" la distance de scroll ; sur petit écran la page n'y arrive pas,
-        // le formulaire restait à moitié hors du viewport et le bouton Envoyer
-        // devenait inatteignable. On joue la même séquence, scrubbée sur
-        // l'entrée naturelle de la section dans le viewport.
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: root.current,
-              start: "top bottom",
-              end: "top 20%",
-              scrub: 1,
-            },
-          })
-          .from(".title-line", { yPercent: 110, stagger: 0.12, duration: 1, ease: "power4.out" })
-          .to(".title-wrap", { opacity: 0.15, scale: 0.92, duration: 0.8 }, ">+0.2")
-          .fromTo(".phone", { yPercent: 88 }, { yPercent: 0, duration: 1, ease: "power3.out" }, "<");
-        // Formulaire atteignable au scroll normal, bouton Envoyer toujours visible.
+        return () => {
+          intro.scrollTrigger?.kill();
+        };
       });
 
       return () => mm.revert();
@@ -101,105 +98,201 @@ export default function ContactScene() {
 
   useGSAP(
     () => {
-      if (state.ok) gsap.from(".success > *", { opacity: 0, y: 40, stagger: 0.15, duration: 0.8, ease: "power3.out" });
+      if (state.ok) gsap.from(".success > *", { opacity: 0, y: 30, stagger: 0.15, duration: 0.8, ease: "power3.out" });
     },
     { scope: root, dependencies: [state.ok] }
   );
 
   return (
-    <section ref={root} id="contact" className="relative h-[100svh] overflow-hidden bg-[#E9E4D8] text-[#141414]">
-      <div className="panel absolute inset-y-0 left-0 w-full bg-[#141414] md:w-1/2" aria-hidden />
+    <section ref={root} id="contact" className="relative min-h-[100svh] overflow-x-clip bg-[#0A090F] text-[#ECEAF4]">
+      {/* Lueurs de marque */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(50% 45% at 88% 12%, rgba(255,106,0,0.16), transparent 70%), radial-gradient(45% 45% at 8% 92%, rgba(139,92,246,0.14), transparent 70%)",
+        }}
+      />
 
-      <div className="marquee pointer-events-none absolute bottom-[4vh] left-0 hidden whitespace-nowrap font-[family-name:var(--font-archivo)] text-[14vw] uppercase leading-none text-transparent mix-blend-difference md:block" style={{ WebkitTextStroke: "1px #fff" }} aria-hidden>
+      {/* Bandeau décoratif en arrière-plan */}
+      <div
+        className="marquee pointer-events-none absolute bottom-[3vh] left-0 hidden w-max whitespace-nowrap font-[family-name:var(--font-archivo)] text-[13vw] uppercase leading-none text-transparent opacity-30 md:block"
+        style={{ WebkitTextStroke: "1px rgba(255,255,255,0.5)" }}
+        aria-hidden
+      >
         Disponible pour de nouveaux projets — Disponible pour de nouveaux projets —
       </div>
 
-      <div className="title-wrap absolute inset-0">
-        <h1 aria-label="Collaborer avec nousdev" className="pointer-events-none absolute left-6 top-16 font-[family-name:var(--font-archivo)] text-[clamp(64px,19vw,200px)] uppercase leading-[0.84] tracking-[-0.04em] text-[#E9E4D8] md:left-14 md:text-[clamp(72px,15.6vw,210px)]">
-          {WORDS.map((w, i) => (
-            <span key={w} aria-hidden className="block overflow-hidden pb-[0.06em]">
-              <span className={`title-line block ${i === 2 ? "text-[#FF6A3D]" : ""}`}>
-                {[...w].map((c, j) => (
-                  <span key={j} className="ch inline-block">{c}</span>
-                ))}
-              </span>
-            </span>
-          ))}
-        </h1>
-        <p className="tagline absolute bottom-12 left-6 max-w-xs text-lg text-[#E9E4D8] md:left-16">
-          Une question, une idée, une envie de projet ? Écris-nous, on te répond vite.
-        </p>
-      </div>
+      <div className="relative z-10 mx-auto grid w-full max-w-[1120px] items-center gap-10 px-5 py-16 md:min-h-[100svh] md:grid-cols-[1.05fr_1fr] md:gap-14 md:px-10 md:py-24">
+        {/* ───────── Colonne titre ───────── */}
+        <div className="title-wrap">
+          <span data-kicker className="mb-5 block text-[11px] font-bold uppercase tracking-[0.3em] text-[#FFD000]">
+            Contact · Disponible
+          </span>
 
-      {/* Mobile : formulaire plein écran. Desktop (md:) : iPhone 3D flottant */}
-      <div className="phone absolute inset-0 h-full w-full overflow-hidden rounded-t-[36px] bg-white shadow-[0_-20px_60px_rgba(0,0,0,0.5)] md:inset-auto md:overflow-visible md:rounded-none md:shadow-none md:left-auto md:right-[2vw] md:top-[5vh] md:h-[90vh] md:min-h-0 md:w-[49vh] md:bg-transparent">
-        <div className="shadow absolute inset-x-6 -bottom-10 hidden h-24 rounded-[50%] bg-black/40 blur-3xl md:block" aria-hidden />
-        <div className="tilt relative h-full w-full bg-white md:rounded-[6vh] md:bg-[#0b0b0c] md:p-[13px] md:ring-[3px] md:ring-[#3a3a3d]">
-          <form
-            action={formAction}
-            noValidate
-            data-lenis-prevent
-            className="relative h-full overflow-y-auto bg-white px-6 pb-5 pt-[max(env(safe-area-inset-top),1.5rem)] md:overflow-y-auto md:rounded-[calc(6vh-13px)] md:px-6 md:pb-6 md:pt-[clamp(44px,6.5vh,64px)]"
+          <h1
+            aria-label="Collaborer avec nousdev"
+            className="font-[family-name:var(--font-archivo)] text-[clamp(46px,7vw,88px)] uppercase leading-[0.86] tracking-[-0.03em] text-[#E9E4D8]"
           >
-            <span className="absolute left-1/2 top-[15px] hidden h-[clamp(24px,3.6vh,36px)] w-[31%] -translate-x-1/2 rounded-full bg-[#0b0b0c] md:block" aria-hidden style={{ top: 'clamp(10px,1.6vh,15px)' }} />
-            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
-
-            {state.ok ? (
-              <div className="success flex h-full flex-col justify-center pb-10" role="status">
-                <p className="font-[family-name:var(--font-archivo)] text-5xl uppercase leading-[0.9]">
-                  Message<br />envoyé
-                </p>
-                <p className="mt-4 text-neutral-600">Merci ! On a bien reçu ton message — on te répond très vite.</p>
-              </div>
-            ) : (
-              <>
-                <h2 className="screen-title mb-3 font-[family-name:var(--font-archivo)] text-2xl text-[#141414]! md:text-[clamp(22px,3.8vh,36px)] uppercase leading-none md:mb-[clamp(10px,2vh,20px)]">
-                  Écris<br />nous
-                </h2>
-                <div className="space-y-2 md:space-y-[clamp(4px,1vh,10px)]">
-                  {FIELDS.map((f) => (
-                    <label key={f.id} className={`field ${labelCls}`}>
-                      {f.label}
-                      <input name={f.id} type={f.type} defaultValue={state.values?.[f.id]} aria-invalid={!!state.errors?.[f.id]} className={inputCls} />
-                      <Err m={state.errors?.[f.id]} />
-                    </label>
+            {WORDS.map((w, i) => (
+              <span key={w} aria-hidden className="block overflow-hidden pb-[0.06em]">
+                <span className={`title-line block ${i === 2 ? "text-[#FF6A00]" : ""}`}>
+                  {[...w].map((c, j) => (
+                    <span key={j} className="ch inline-block">
+                      {c}
+                    </span>
                   ))}
-                  <div className="field flex gap-3.5">
-                    <label className={`flex-1 ${labelCls}`}>
-                      Budget (facultatif)
-                      <input name="budget" defaultValue={state.values?.budget} aria-invalid={!!state.errors?.budget} className={inputCls} />
-                      <Err m={state.errors?.budget} />
-                    </label>
-                    <label className={`flex-1 ${labelCls}`}>
-                      Délai (facultatif)
-                      <input name="delai" defaultValue={state.values?.delai} aria-invalid={!!state.errors?.delai} className={inputCls} />
-                      <Err m={state.errors?.delai} />
-                    </label>
-                  </div>
-                  <label className={`field ${labelCls}`}>
-                    Message
-                    <textarea name="message" placeholder="Ta question, ton idée ou ton projet — dis-nous en quelques mots." defaultValue={state.values?.message} aria-invalid={!!state.errors?.message} className={`${textareaCls} resize-none py-3`} />
-                    <Err m={state.errors?.message} />
-                  </label>
-                </div>
-                {state.message && (
-                  <p role="alert" className="mt-3 text-sm font-bold text-[#C2370E]">{state.message}</p>
-                )}
-                <button type="submit" disabled={pending} className="submit mt-4 h-12 w-full rounded-full bg-[#141414] font-[family-name:var(--font-archivo)] text-base uppercase text-white disabled:opacity-60 md:mt-[clamp(10px,2vh,20px)] md:h-[clamp(40px,5.6vh,56px)]">
-                  {pending ? "Envoi…" : "Envoyer"}
-                </button>
-              </>
-            )}
-          </form>
-          <div className="glare pointer-events-none absolute inset-0 hidden overflow-hidden rounded-[6vh] md:block" aria-hidden>
-            <div className="h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-          </div>
+                </span>
+              </span>
+            ))}
+          </h1>
+
+          <div
+            data-line
+            className="mt-6 h-px w-full max-w-sm origin-left bg-gradient-to-r from-[#FF6A00] via-[#FFD000] to-transparent"
+          />
+
+          <p className="tagline mt-6 max-w-sm text-base leading-relaxed text-white/60 md:text-lg">
+            Une question, une idée, une envie de projet&nbsp;? Écris-nous, on te répond vite.
+          </p>
         </div>
+
+        {/* ───────── Panneau formulaire ───────── */}
+        <form
+          action={formAction}
+          noValidate
+          className="panel relative z-10 rounded-[14px] border border-white/10 bg-[#12111A]/90 p-6 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl md:p-8"
+        >
+          <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+
+          {state.ok ? (
+            <div className="success flex min-h-[360px] flex-col justify-center" role="status">
+              <p className="font-[family-name:var(--font-archivo)] text-[clamp(34px,5vw,52px)] uppercase leading-[0.95] text-[#FF6A00]">
+                Message
+                <br />
+                envoyé
+              </p>
+              <p className="mt-4 max-w-sm text-white/60">
+                Merci ! On a bien reçu ton message — on te répond très vite.
+              </p>
+            </div>
+          ) : (
+            <>
+              <span className="block text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF6A00]">
+                Prise de contact
+              </span>
+              <h2 className="screen-title mt-3 font-[family-name:var(--font-archivo)] text-[clamp(24px,3vw,34px)] uppercase leading-none text-[#ECEAF4]">
+                Parlons de
+                <br />
+                votre projet
+              </h2>
+
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {FIELDS.map((f) => (
+                  <label key={f.id} className={`field group ${labelCls}`}>
+                    {f.label}
+                    <input
+                      name={f.id}
+                      type={f.type}
+                      placeholder={f.placeholder}
+                      defaultValue={state.values?.[f.id]}
+                      aria-invalid={!!state.errors?.[f.id]}
+                      className={inputCls}
+                    />
+                    <Err m={state.errors?.[f.id]} />
+                  </label>
+                ))}
+
+                <label className={`field group sm:col-span-2 ${labelCls}`}>
+                  Budget (facultatif)
+                  <span className="relative mt-2 block">
+                    <select
+                      name="budget"
+                      defaultValue={state.values?.budget ?? ""}
+                      aria-invalid={!!state.errors?.budget}
+                      className={`${boxCls} cursor-pointer appearance-none pr-10`}
+                    >
+                      <option value="" className="bg-[#12111A]">
+                        À préciser
+                      </option>
+                      {BUDGETS.map((b) => (
+                        <option key={b} value={b} className="bg-[#12111A]">
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </span>
+                  <Err m={state.errors?.budget} />
+                </label>
+
+                <label className={`field group sm:col-span-2 ${labelCls}`}>
+                  Délai (facultatif)
+                  <span className="relative mt-2 block">
+                    <select
+                      name="delai"
+                      defaultValue={state.values?.delai ?? ""}
+                      aria-invalid={!!state.errors?.delai}
+                      className={`${boxCls} cursor-pointer appearance-none pr-10`}
+                    >
+                      <option value="" className="bg-[#12111A]">
+                        Sans préférence
+                      </option>
+                      {DELAIS.map((d) => (
+                        <option key={d} value={d} className="bg-[#12111A]">
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </span>
+                  <Err m={state.errors?.delai} />
+                </label>
+
+                <label className={`field group sm:col-span-2 ${labelCls}`}>
+                  Message
+                  <textarea
+                    name="message"
+                    rows={4}
+                    placeholder="Ta question, ton idée ou ton projet — dis-nous en quelques mots."
+                    defaultValue={state.values?.message}
+                    aria-invalid={!!state.errors?.message}
+                    className={`${inputCls} min-h-[120px] resize-none`}
+                  />
+                  <Err m={state.errors?.message} />
+                </label>
+              </div>
+
+              {state.message && (
+                <p role="alert" className="mt-4 text-sm font-bold text-[#FF8A6A]">
+                  {state.message}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={pending}
+                className="submit mt-6 flex h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#FF6A00] font-[family-name:var(--font-archivo)] text-base uppercase tracking-wide text-black transition-colors duration-300 hover:bg-[#FFD000] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending ? "Envoi en cours…" : "Lancer le projet"}
+              </button>
+            </>
+          )}
+        </form>
       </div>
 
-      {/* Grain argentique + vignette, par-dessus toute la scène */}
-      <div className="pointer-events-none absolute inset-0 hidden opacity-[0.10] mix-blend-multiply md:block" style={{ backgroundImage: GRAIN }} aria-hidden />
-      <div className="pointer-events-none absolute inset-0 hidden md:block" style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.35) 100%)" }} aria-hidden />
+      {/* Grain argentique + vignette */}
+      <div
+        className="pointer-events-none absolute inset-0 hidden opacity-[0.10] mix-blend-overlay md:block"
+        style={{ backgroundImage: GRAIN }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 hidden md:block"
+        style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.35) 100%)" }}
+        aria-hidden
+      />
     </section>
   );
 }

@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react';
 
 export default function ProjectHero() {
   const container = useRef<HTMLElement>(null);
+  const chefTl = useRef<gsap.core.Timeline | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const TEXT = "Au-delà du développement traditionnel, j'articule les intelligences artificielles pour décupler les capacités de vos plateformes. Cette démarche s'accompagne d'une exigence absolue quant à l'ergonomie et au raffinement visuel de vos interfaces.";
@@ -48,12 +49,12 @@ export default function ProjectHero() {
       .to(line, { scaleX: 1, duration: 1.1, ease: "expo.inOut" }, 0.4)
       .to(words, { yPercent: 0, rotate: 0, duration: 0.9, stagger: 0.014 }, 0.45);
 
-    (current as any)._chefTl = tl;
+    chefTl.current = tl;
   }, { scope: container });
 
   const toggleChef = () => {
     setIsOpen(!isOpen);
-    const tl = (container.current as any)?._chefTl;
+    const tl = chefTl.current;
     if (!tl) return;
 
     if (!isOpen) {
