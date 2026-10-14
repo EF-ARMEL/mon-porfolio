@@ -512,16 +512,18 @@ export default function ContactTerminal({ onRestart }: { onRestart?: () => void 
         Disponible pour de nouveaux projets — Disponible pour de nouveaux projets —
       </div>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-[1120px] items-center gap-10 px-5 py-16 md:min-h-[100svh] md:grid-cols-[1.05fr_1fr] md:gap-14 md:px-10 md:py-24">
+      <div className="relative z-10 mx-auto grid w-full max-w-[1120px] items-center gap-10 px-5 py-16 md:min-h-[100svh] md:gap-14 md:px-10 md:py-24 grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
         {/* ───────── Colonne titre ───────── */}
-        <div className="title-wrap">
+        {/* min-w-0 : sans ça, l'item de grille garde sa taille max-content et
+            le titre dépasse la gouttière sur les très petits écrans. */}
+        <div className="title-wrap min-w-0">
           <span data-kicker className="mb-5 block text-[11px] font-bold uppercase tracking-[0.3em] text-[#FFD000]">
             Contact · Disponible
           </span>
 
           <h1
             aria-label="Collaborer avec nousdev"
-            className="font-[family-name:var(--font-archivo)] text-[clamp(46px,7vw,88px)] uppercase leading-[0.86] tracking-[-0.03em] text-[#E9E4D8]"
+            className="font-[family-name:var(--font-archivo)] text-[clamp(38px,10.5vw,88px)] uppercase leading-[0.86] tracking-[-0.03em] text-[#E9E4D8]"
           >
             {WORDS.map((w, i) => (
               <span key={w} aria-hidden className="block overflow-hidden pb-[0.06em]">

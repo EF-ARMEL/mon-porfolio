@@ -178,15 +178,15 @@ export default function ConductorButton({
           const t = tl.current;
           if (t) (t.progress() > 0.5 ? close : open)();
         }}
-        className="ctd-btn group relative inline-flex min-h-[42px] items-center gap-2 overflow-hidden rounded-full border border-white/25 bg-gradient-to-b from-[#241033] to-[#0b0710] px-5 py-2 shadow-[0_14px_38px_-22px_rgba(139,92,246,0.9)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-[#8B5CF6]/70 hover:shadow-[0_18px_48px_-20px_rgba(139,92,246,0.95)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD000] md:min-h-[40px] md:gap-2.5 md:px-6 md:py-2"
+        className="ctd-btn group relative inline-flex min-h-[36px] items-center gap-1.5 overflow-hidden rounded-full border border-white/25 bg-gradient-to-b from-[#241033] to-[#0b0710] px-3.5 py-1.5 shadow-[0_10px_28px_-20px_rgba(139,92,246,0.9)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-[#8B5CF6]/70 hover:shadow-[0_14px_36px_-18px_rgba(139,92,246,0.95)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD000] md:min-h-[32px] md:gap-2 md:px-4 md:py-1"
       >
         {/* Pastille orange : repère d'ouverture, pulse au repos. */}
-        <span aria-hidden className="relative flex h-2 w-2 flex-none">
+        <span aria-hidden className="relative flex h-1.5 w-1.5 flex-none">
           <span className="ctd-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6A00] opacity-70" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FF6A00]" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />
         </span>
 
-        <span className="relative block font-[family-name:var(--font-archivo)] text-[11px] uppercase leading-tight tracking-[0.14em] text-white sm:text-[12px] md:text-[13px]">
+        <span className="relative block font-[family-name:var(--font-archivo)] text-[9px] uppercase leading-tight tracking-[0.12em] text-white sm:text-[10px] md:text-[11px] md:tracking-[0.14em]">
           {label}
         </span>
 
@@ -195,7 +195,7 @@ export default function ConductorButton({
           aria-hidden
           viewBox="0 0 24 24"
           fill="none"
-          className={`ctd-caret h-3 w-3 flex-none text-[#FFD000] transition-transform duration-300 ${
+          className={`ctd-caret h-2.5 w-2.5 flex-none text-[#FFD000] transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
         >
