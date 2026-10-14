@@ -9,7 +9,7 @@ import Stack from "@/components/sections/Stack";
 import Toolbox from "@/components/sections/Toolbox";
 import Quiz from "@/components/sections/Quiz";
 import Testimonials from "@/components/sections/Testimonials";
-import ContactScene from "@/components/ContactScene";
+import ContactTerminalSession from "@/components/contact/ContactTerminalSession";
 import Footer from "@/components/layout/Footer";
 import type { ProjectRecord } from "@/lib/admin/projects";
 
@@ -46,7 +46,7 @@ export default function Home({ projects }: { projects: ProjectRecord[] }) {
         <Quiz />
         <Testimonials />
 
-        <ContactScene />
+        <ContactTerminalSession />
         <Footer />
       </main>
     </>

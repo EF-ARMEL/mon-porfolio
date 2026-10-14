@@ -1,0 +1,310 @@
+/* ─────────────────────────────────────────────────────────────
+   ContactTerminal — formulaire « Le Terminal »
+   Palette alignée sur le design system du site (docs/DESIGN-SYSTEM.md) :
+   fond #0A090F · crème #ECEAF4 · orange #FF6A00 · jaune #FFD000 · violet #8B5CF6
+   Mobile-first : rien ne dépasse à 320 px, cibles tactiles ≥ 44 px.
+   ───────────────────────────────────────────────────────────── */
+
+.ct-wrap,
+.ct-page {
+  --bg: #0a090f;
+  --fg: #eceaf4;
+  --mut: rgba(236, 234, 244, 0.55);
+  --or: #ff6a00;
+  --ye: #ffd000;
+  --vi: #8b5cf6;
+  --line: rgba(255, 255, 255, 0.12);
+  --mo: var(--font-jetbrains), "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --hd: var(--font-archivo-black), "Archivo Black", Impact, "Arial Black", sans-serif;
+}
+
+.ct-wrap {
+  position: relative;
+  width: 100%;
+  /* Pas de padding ici : la grille de la section (px-5 / md:px-10) gère
+     déjà les gouttières, sinon on dédouble l'espacement. */
+  padding-inline: 0;
+  color: var(--fg);
+}
+
+/* Champ caché anti-robots : hors flux, non focalisable, ignoré par les lecteurs d'écran. */
+.ct-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.term {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  background: #08080b;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(255, 106, 0, 0.13), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  font: 400 clamp(13px, 1.6vw, 15px) / 1.8 var(--mo);
+}
+
+/* Balayage cathodique. */
+.term::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+}
+
+/* Barre de titre */
+.tbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--mut);
+  font-size: 12px;
+}
+.tbar i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--or);
+  flex: none;
+}
+.tbar i:nth-child(2) {
+  background: var(--ye);
+}
+.tbar i:nth-child(3) {
+  background: var(--vi);
+}
+.tbar span {
+  margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Corps */
+.tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Assez pour accueillir le journal + la confirmation, sans vide inutile
+     au premier écran (une seule ligne visible au départ). */
+  min-height: clamp(220px, 42vh, 340px);
+  padding: clamp(18px, 3vw, 36px);
+}
+
+.dim {
+  margin: 0;
+  min-height: 1.8em;
+  color: var(--mut);
+  overflow-wrap: anywhere;
+}
+
+/* Ligne champ : label + saisie + bouton, empilable sur petit écran. */
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.row label {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+  color: var(--mut);
+}
+.ps {
+  color: var(--or);
+}
+.row b {
+  color: var(--ye);
+  font-weight: 600;
+}
+
+.row input,
+.row textarea {
+  flex: 1 1 150px;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--fg);
+  font: inherit;
+  caret-color: var(--or);
+  resize: none;
+  overflow: hidden;
+}
+.row input::placeholder,
+.row textarea::placeholder {
+  color: rgba(236, 234, 244, 0.22);
+}
+/* Ligne active : libellé orange + soulignement pour situer la zone de saisie
+   même sans focus (le clavier virtuel ne doit pas surgir sur mobile). */
+.row.active label {
+  color: var(--or);
+}
+.row.active input,
+.row.active textarea,
+.row.active select {
+  border-bottom: 1px solid rgba(255, 106, 0, 0.45);
+  padding-bottom: 4px;
+}
+.row.active:focus-within input,
+.row.active:focus-within textarea,
+.row.active:focus-within select {
+  border-bottom-color: var(--ye);
+}
+
+/* Sélect natif habillé en terminal : liste déroulante du système (bonne
+   ergonomie tactile), chevron maison aligné à droite. */
+.ct-select-wrap {
+  position: relative;
+  flex: 1 1 150px;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+}
+.row select.ct-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 26px 0 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  text-overflow: ellipsis;
+}
+.row select.ct-select option {
+  background: #08080b;
+  color: var(--fg);
+}
+.row select.ct-select:disabled {
+  color: var(--mut);
+  cursor: default;
+}
+.ct-caret {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  width: 15px;
+  height: 15px;
+  color: var(--mut);
+}
+.row.active .ct-caret {
+  color: var(--or);
+}
+
+/* Cibles tactiles : 44 px minimum, quelle que soit la hauteur de texte. */
+.go {
+  all: unset;
+  cursor: pointer;
+  color: var(--mut);
+  font: 600 12px/1 var(--mo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.go:hover {
+  color: #000;
+  border-color: var(--or);
+  background: var(--or);
+}
+.go:focus-visible {
+  outline: 2px solid var(--ye);
+  outline-offset: 2px;
+}
+.go:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.go[hidden],
+.again[hidden] {
+  display: none;
+}
+
+/* Erreur sous la ligne courante. */
+.err {
+  margin: 4px 0 0;
+  min-height: 1.8em;
+  color: var(--or);
+  overflow-wrap: anywhere;
+}
+
+/* Journal d'envoi */
+.ll {
+  margin: 0;
+  color: var(--mut);
+  overflow-wrap: anywhere;
+}
+.ll.ok {
+  color: var(--fg);
+}
+
+/* Phrase de confirmation */
+.fin {
+  margin: 18px 0 0;
+  font: 400 clamp(1.4rem, 3.6vw, 2.5rem) / 1.1 var(--hd);
+  background: linear-gradient(90deg, var(--or), var(--ye));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  overflow-wrap: anywhere;
+}
+
+.again {
+  all: unset;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 16px;
+  color: var(--ye);
+  font: 600 13px/1 var(--mo);
+  border-bottom: 1px dashed var(--ye);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.again:focus-visible {
+  outline: 2px solid var(--or);
+  outline-offset: 3px;
+}
+
+/* Accessibilité : mouvement réduit, le contenu s'affiche d'emblée. */
+@media (prefers-reduced-motion: reduce) {
+  .ct-wrap *,
+  .ct-wrap *::before,
+  .ct-wrap *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Très petits écrans : on détache le bouton de la ligne de saisie. */
+@media (max-width: 420px) {
+  .row label {
+    flex: 1 1 100%;
+  }
+  .row input,
+  .row textarea {
+    flex: 1 1 100%;
+  }
+  .go {
+    width: 100%;
+  }
+}

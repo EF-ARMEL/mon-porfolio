@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter, Anton, Archivo_Black } from "next/font/google";
+import { Inter, Anton, Archivo_Black, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
@@ -20,13 +20,20 @@ const archivoBlack = Archivo_Black({
   subsets: ["latin"],
   variable: "--font-archivo-black",
 });
+// Monospace du formulaire « Le Terminal » : le CSS de ContactTerminal référence
+// --font-jetbrains avec une pile de repli système si le webfont n'est pas dispo.
+const jetbrains = JetBrains_Mono({
+  weight: ["400", "600"],
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+});
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (      <html lang="fr" className={`${inter.variable} ${anton.variable} ${archivoBlack.variable}`} suppressHydrationWarning>
+  return (      <html lang="fr" className={`${inter.variable} ${anton.variable} ${archivoBlack.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body className="text-text-secondary antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <LanguageProvider>

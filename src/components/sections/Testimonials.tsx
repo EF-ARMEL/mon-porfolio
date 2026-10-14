@@ -38,7 +38,7 @@ const VOICES: Voice[] = [
     id: "keke",
     name: "Kéké",
     initials: "K",
-    role: "IA Project Building",
+    role: "IA Project Builder",
     quote:
       "Il orchestre l'IA sans jamais lui donner le dernier mot. En une semaine, notre prototype était en production — documenté, testé, et de niveau pro.",
     color: "#FFD000",
