@@ -108,15 +108,36 @@ export function SettingsTab({ initial }: { initial: boolean }) {
             aria-label="Mode maintenance"
             onClick={toggle}
             disabled={busy}
-            className={`relative h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors disabled:opacity-50 ${
+            className={`relative h-11 w-20 shrink-0 cursor-pointer rounded-full transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${
               maintenance ? "bg-[#FF6A00]" : "bg-white/15"
             }`}
           >
             <span
-              className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-transform ${
-                maintenance ? "translate-x-7" : "translate-x-1"
+              aria-hidden
+              className={`absolute top-1 left-1 h-9 w-9 rounded-full bg-white shadow transition-transform duration-200 ${
+                maintenance ? "translate-x-9" : "translate-x-0"
               }`}
             />
+            {busy && (
+              <span
+                className="absolute inset-0 flex items-center justify-center"
+                aria-live="polite"
+              >
+                <svg
+                  className={`h-4 w-4 animate-spin ${
+                    maintenance ? "text-black/70" : "text-white/70"
+                  }`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              </span>
+            )}
           </button>
         </div>
 

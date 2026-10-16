@@ -65,13 +65,18 @@ export function ProjectForm({
         | null;
       if (res.ok && data?.ok && data.path) {
         setF((s) => ({ ...s, image: data.path as string }));
+        setImgError(null);
       } else {
         setImgError(
           data?.error === "too_large"
             ? "Image trop lourde (5 Mo maximum)."
             : data?.error === "unsupported_type"
               ? "Format non supporté (JPG, PNG, WebP ou AVIF)."
-              : "Échec de l'envoi de l'image. Réessaie."
+              : data?.error === "invalid_file"
+                ? "Aucun fichier sélectionné."
+                : data?.error === "write_failed"
+                  ? "Impossible d'enregistrer le fichier. Vérifie les permissions du disque."
+                  : "Échec de l'envoi de l'image. Réessaie."
         );
       }
     } catch {

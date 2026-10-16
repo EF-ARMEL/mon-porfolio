@@ -17,6 +17,26 @@ function ArrowIcon() {
   );
 }
 
+/*
+   Visuel de carte : si l'image ne se charge pas (fichier supprimé, chemin cassé),
+   on démonte l'<Image> pour laisser apparaître le dégradé de la carte — jamais
+   d'icône « image cassée » du navigateur ni de placeholder de next/image.
+*/
+function CardImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 719px) 92vw, 300px"
+      style={{ objectFit: "cover" }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 const PF_CSS = `
 .pfab {
   --pc-bg: #07070a;
@@ -141,19 +161,13 @@ export default function PortfolioGrid({ projects }: { projects: ProjectRecord[] 
         </div>
 
         <div className="pc-vis">
+          {/* Le dégradé est toujours peint : si `image` manque OU échoue,
+              c'est lui qui sert de visuel de repli. */}
           <div
             className="pc-bg"
-            style={p.image ? undefined : { background: `linear-gradient(135deg, ${p.from}, ${p.to})` }}
+            style={{ background: `linear-gradient(135deg, ${p.from}, ${p.to})` }}
           >
-            {p.image && (
-              <Image
-                src={p.image}
-                alt={p.title}
-                fill
-                sizes="(max-width: 719px) 92vw, 300px"
-                style={{ objectFit: "cover" }}
-              />
-            )}
+            {p.image && <CardImage src={p.image} alt={p.title} />}
           </div>
           {p.status && (
             <span className="pc-status" aria-label={p.status}>
