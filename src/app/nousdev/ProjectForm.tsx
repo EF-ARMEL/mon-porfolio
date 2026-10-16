@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { ProjectRecord } from "@/lib/admin/projects";
+import { isValidImageValue } from "@/lib/admin/project-validate";
 
 type Block = { title: string; desc: string };
 
@@ -37,6 +38,8 @@ export function ProjectForm({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imgError, setImgError] = useState<string | null>(null);
+  /** Vrai quand l'aperçu ne se charge pas (chemin incorrect, fichier absent). */
+  const [imgBroken, setImgBroken] = useState(false);
 
   const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
   const IMAGE_MAX = 5 * 1024 * 1024;
@@ -65,6 +68,7 @@ export function ProjectForm({
         | null;
       if (res.ok && data?.ok && data.path) {
         setF((s) => ({ ...s, image: data.path as string }));
+        setImgBroken(false);
         setImgError(null);
       } else {
         setImgError(
@@ -87,6 +91,11 @@ export function ProjectForm({
   };
 
   const set = (k: keyof typeof f, v: string) => setF((s) => ({ ...s, [k]: v }));
+  /** Change le chemin d'image et réarme l'aperçon. */
+  const setImage = (v: string) => {
+    setImgBroken(false);
+    set("image", v);
+  };
   const setBlock = (i: number, k: keyof Block, v: string) =>
     setF((s) => ({ ...s, blocks: s.blocks.map((b, j) => (j === i ? { ...b, [k]: v } : b)) }));
 
@@ -112,8 +121,13 @@ export function ProjectForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    setBusy(true);
     setError(null);
+    // Garde-fou identique à la règle du serveur : on ne part jamais un chemin refusé.
+    if (!isValidImageValue(f.image)) {
+      setError("Chemin d'image invalide : il doit commencer par /projects/ ou être une URL https://.");
+      return;
+    }
+    setBusy(true);
     try {
       const res = await fetch(isNew ? "/api/admin/projects" : `/api/admin/projects/${project.id}`, {
         method: isNew ? "POST" : "PUT",
@@ -125,7 +139,9 @@ export function ProjectForm({
       setError(
         data?.error === "duplicate_id"
           ? "Cet id existe déjà."
-          : "Vérifie les champs (id, titre, année obligatoires)."
+          : data?.error === "invalid_project"
+            ? "Formulaire refusé : vérifie l'id, le titre, l'année, le lien (URL https://) et le chemin d'image."
+            : "Vérifie les champs (id, titre, année obligatoires)."
       );
     } catch {
       setError("Erreur réseau.");
@@ -137,6 +153,9 @@ export function ProjectForm({
   const input =
     "mt-1 block w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#FF6A00]";
   const label = "block text-[11px] font-bold uppercase tracking-[0.15em] text-white/50";
+  const pathHint = isValidImageValue(f.image)
+    ? null
+    : "Chemin d'image invalide : commence par /projects/ ou une URL https://.";
 
   return (
     <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur">
@@ -185,21 +204,58 @@ export function ProjectForm({
             <input value={f.tags} onChange={(e) => set("tags", e.target.value)} className={input} />
           </label>
           <label className={`${label} col-span-2`}>
-            Lien (href) — vide = carte non cliquable
+            Lien du projet (href) — vide = carte non cliquable
             <input value={f.href} onChange={(e) => set("href", e.target.value)} className={input} />
           </label>
           <div className={`${label} col-span-2`}>
             Image du projet
-            <div className="mt-2 flex items-center gap-3">
-              <span className="relative block h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                {f.image ? (
-                  <Image src={f.image} alt="" fill sizes="96px" className="object-cover" />
-                ) : (
-                  <span className="grid h-full w-full place-items-center text-[10px] text-white/30">
-                    Aucune
-                  </span>
-                )}
+            {/* Aperçu : affiché dès que le chemin est rempli. `unoptimized` court-
+                circuite le loader de next/image (contrôle d'hôte inclus) : une URL
+                https quelconque s'affiche sans configuration ni écriture disque. */}
+            <div className="relative mt-2 block h-40 w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
+              {f.image && !imgBroken ? (
+                <Image
+                  key={f.image}
+                  src={f.image}
+                  alt={f.title ? `Aperçu — ${f.title}` : "Aperçu de l'image du projet"}
+                  fill
+                  unoptimized
+                  sizes="100vw"
+                  className="object-cover"
+                  onError={() => setImgBroken(true)}
+                />
+              ) : f.image ? (
+                <span className="grid h-full w-full place-items-center px-4 text-center text-[11px] font-bold text-[#ff6b6b]">
+                  Image introuvable à ce chemin : fichier absent ou URL inaccessible.
+                </span>
+              ) : (
+                <span className="grid h-full w-full place-items-center px-4 text-center text-[11px] text-white/30">
+                  Aucune image : renseigne le chemin ci-dessous ou importe un fichier.
+                </span>
+              )}
+            </div>
+
+            <label className="mt-3 block">
+              Chemin de l&apos;image
+              <input
+                value={f.image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="/projects/blog.png"
+                spellCheck={false}
+                aria-invalid={pathHint ? true : undefined}
+                className={input}
+              />
+            </label>
+            <span className="mt-1 block text-[10px] text-white/40">
+              Commence par /projects/ ou https:// · rien n&apos;est écrit sur le disque.
+            </span>
+            {pathHint && (
+              <span role="alert" className="mt-1 block text-xs font-bold text-[#ff6b6b]">
+                {pathHint}
               </span>
+            )}
+
+            <div className="mt-3 flex items-center gap-3">
               <div className="flex min-w-0 flex-col gap-1.5">
                 <div className="flex gap-2">
                   <label className="inline-flex cursor-pointer items-center rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold hover:border-[#FF6A00] hover:text-[#FF6A00]">
@@ -215,7 +271,7 @@ export function ProjectForm({
                   {f.image && (
                     <button
                       type="button"
-                      onClick={() => set("image", "")}
+                      onClick={() => setImage("")}
                       disabled={uploading}
                       className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-[#ff6b6b] hover:bg-[#ff4d4d]/10 disabled:opacity-50"
                     >
@@ -242,7 +298,7 @@ export function ProjectForm({
             />
           </label>
           <label className={label}>
-            Badge (status) — vide = « En ligne »
+            Statut (status) — vide = « En ligne »
             <input value={f.status} onChange={(e) => set("status", e.target.value)} className={input} />
           </label>
           <label className={label}>

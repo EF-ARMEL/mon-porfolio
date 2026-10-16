@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -238,11 +237,6 @@ export default function ProjectCabinet({ projects }: { projects: ProjectRecord[]
 
       <div className="pc-head">
         <span>Sélection de projets</span>
-        {PROJECTS.length > 6 && (
-          <span className="pc-head-cta">
-            <Link href="/portfolio">Voir tout ↗</Link>
-          </span>
-        )}
         <span>({String(PROJECTS.length).padStart(2, "0")})</span>
       </div>
 
@@ -407,15 +401,6 @@ const CSS = `/* ================= STYLES DU COMPOSANT ================= */
 }
 .pc-head span:first-child { color: var(--pc-dim); }
 .pc-head span:last-child { color: var(--pc-yellow); }
-.pc-head-cta a {
-  pointer-events: auto;
-  color: var(--pc-yellow);
-  border: 1px solid var(--pc-line);
-  border-radius: 4px;
-  padding: 6px 14px;
-  transition: border-color 0.3s, color 0.3s;
-}
-.pc-head-cta a:hover { border-color: var(--pc-yellow); }
 
 /* ---------- Casier ---------- */
 .pc-cab {
@@ -840,5 +825,3 @@ const CSS = `/* ================= STYLES DU COMPOSANT ================= */
 }
 `;
 
-/* CSS partagé avec la page /portfolio (cartes identiques). */
-export { CSS as pcCss };
