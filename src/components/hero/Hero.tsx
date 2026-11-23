@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { ArrowUpRight } from "lucide-react";
 import ConductorButton from "@/components/ConductorButton";
 import { getLenis } from "@/components/providers/SmoothScrollProvider";
 
@@ -258,7 +259,10 @@ export default function Hero({ startAnimation = false }: HeroProps) {
               <span className="relative z-10 flex items-center gap-2">
                 Discutons
                 <span className="inline-block transition-transform duration-300 group-hover:rotate-45">
-                  <span className="cta-arrow inline-block">↗</span>
+                  {/* Icône SVG et non le caractère « ↗ » : iOS l'affiche en emoji (carré bleu). */}
+                  <span className="cta-arrow inline-flex">
+                    <ArrowUpRight size={18} strokeWidth={2.5} aria-hidden />
+                  </span>
                 </span>
               </span>
             </button>

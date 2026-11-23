@@ -146,7 +146,7 @@ export function SettingsTab({ initial }: { initial: boolean }) {
             maintenance ? "text-[#FF6A00]" : "text-emerald-400"
           }`}
         >
-          {maintenance ? "⚠ Site en maintenance" : "✓ Site en ligne"}
+          {maintenance ? "⚠︎ Site en maintenance" : "✓ Site en ligne"}
         </p>
         {saved && <p className="mt-2 text-xs text-white/40">Réglage enregistré.</p>}
         {error && (
