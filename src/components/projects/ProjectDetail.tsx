@@ -219,6 +219,9 @@ export default function ProjectDetail({ project, onClose }: Props) {
                   alt={project.title}
                   fill
                   sizes="(max-width: 900px) 92vw, 44vw"
+                  // Une URL externe n'est pas dans images.remotePatterns : sans
+                  // `unoptimized`, next/image lèverait une erreur et casserait la page.
+                  unoptimized={project.image.startsWith("https://")}
                   style={{ objectFit: "cover" }}
                 />
               )}

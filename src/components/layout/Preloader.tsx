@@ -127,9 +127,10 @@ export default function Preloader({ onComplete }: PreloaderProps) {
 
         {/* Brand Section */}
         <div ref={nousDevRef} className="mt-8" style={{ opacity: 0 }}>
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading text-white leading-none tracking-tighter uppercase" style={{ fontWeight: 900 }}>
+          {/* Pas un <h1> : le titre unique de la page est celui du Hero. */}
+          <p className="text-6xl md:text-8xl lg:text-9xl font-heading text-white leading-none tracking-tighter uppercase" style={{ fontWeight: 900 }}>
             NOUSDEV
-          </h1>
+          </p>
         </div>
 
       </div>

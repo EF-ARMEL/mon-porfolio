@@ -49,3 +49,6 @@ next-env.d.ts
 # secrets locaux et artifacts de test
 vercel-secrets/
 .playwright-mcp/
+
+# réglages locaux de Claude Code (permissions propres à chaque machine)
+.claude/settings.local.json

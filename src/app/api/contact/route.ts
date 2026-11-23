@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid_option" }, { status: 400 });
   }
 
-  if (!rateLimit(`contact:${clientIp(req)}`, LIMIT.max, LIMIT.windowMs)) {
+  if (!(await rateLimit(`contact:${clientIp(req)}`, LIMIT.max, LIMIT.windowMs))) {
     return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
   }
 

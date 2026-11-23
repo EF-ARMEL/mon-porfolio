@@ -64,7 +64,7 @@ const FIELDS: FieldDef[] = [
     btn: "↵ Entrée",
     kind: "tel",
     optional: true,
-    placeholder: "+33 6 12 34 56",
+    placeholder: "+225 07 12 34 56 78",
     autoComplete: "tel",
     maxLength: 30,
     min: 6,
@@ -521,7 +521,7 @@ export default function ContactTerminal({ onRestart }: { onRestart?: () => void 
             Contact · Disponible
           </span>
 
-          <h1
+          <h2
             aria-label="Collaborer avec nousdev"
             className="font-[family-name:var(--font-archivo)] text-[clamp(38px,10.5vw,88px)] uppercase leading-[0.86] tracking-[-0.03em] text-[#E9E4D8]"
           >
@@ -536,7 +536,7 @@ export default function ContactTerminal({ onRestart }: { onRestart?: () => void 
                 </span>
               </span>
             ))}
-          </h1>
+          </h2>
 
           <div
             data-line

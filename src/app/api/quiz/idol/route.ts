@@ -4,7 +4,7 @@ import { clientIp, normalize, rateLimit, signToken } from "@/lib/quiz/security";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  if (!rateLimit(`idol:${clientIp(req)}`, 10, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`idol:${clientIp(req)}`, 10, 10 * 60 * 1000))) {
     return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
   }
 

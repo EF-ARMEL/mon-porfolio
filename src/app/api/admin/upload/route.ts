@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { requireAdmin } from "@/lib/admin/guard";
+import { saveUpload, UPLOAD_PREFIX } from "@/lib/admin/uploads";
 
 export const runtime = "nodejs";
 
@@ -13,13 +12,13 @@ const TYPES: Record<string, string> = {
   "image/webp": ".webp",
   "image/avif": ".avif",
 };
-const MAX_SIZE = 5 * 1024 * 1024; // 5 Mo
+const MAX_SIZE = 4 * 1024 * 1024; // 4 Mo (sous la limite de corps de requête Vercel de 4,5 Mo)
 
 /**
  * Upload d'une image de projet (admin uniquement).
  * Reçoit un FormData avec un champ `file`, valide le format et la taille,
- * écrit le fichier dans public/projects/ et renvoie le chemin public
- * attendu par le champ `image` du projet (/projects/xxx.png).
+ * stocke l'image en base (le disque Vercel est en lecture seule) et renvoie
+ * le chemin public servi par /uploads/[name].
  */
 export async function POST(req: Request) {
   const guard = await requireAdmin();
@@ -40,14 +39,12 @@ export async function POST(req: Request) {
   }
 
   const name = `p-${Date.now().toString(36)}-${randomBytes(4).toString("hex")}${ext}`;
-  const dir = path.join(process.cwd(), "public", "projects");
   try {
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, name), Buffer.from(await file.arrayBuffer()));
+    await saveUpload(name, file.type, new Uint8Array(await file.arrayBuffer()));
   } catch (err) {
-    console.error("[upload] Écriture impossible :", err);
+    console.error("[upload] Enregistrement impossible :", err);
     return NextResponse.json({ ok: false, error: "write_failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, path: `/projects/${name}` });
+  return NextResponse.json({ ok: true, path: `${UPLOAD_PREFIX}${name}` });
 }

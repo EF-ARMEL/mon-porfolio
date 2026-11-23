@@ -3,12 +3,12 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  claimToken,
   clientIp,
   isEmail,
-  isUsed,
-  markUsed,
   normalize,
   rateLimit,
+  releaseToken,
   signToken,
   verifyToken,
 } from "@/lib/quiz/security";
@@ -84,26 +84,47 @@ describe("jetons de récompense", () => {
 });
 
 describe("usage unique", () => {
-  it("marque puis détecte un jeton utilisé", () => {
-    expect(isUsed("n-1")).toBe(false);
-    markUsed("n-1");
-    expect(isUsed("n-1")).toBe(true);
+  it("un jeton ne peut être réservé qu'une fois", async () => {
+    const n = `n-${Date.now()}-${Math.random()}`;
+    expect(await claimToken(n)).toBe(true);
+    expect(await claimToken(n)).toBe(false);
+  });
+
+  it("deux réservations simultanées : une seule réussit", async () => {
+    const n = `n-${Date.now()}-${Math.random()}`;
+    const results = await Promise.all([claimToken(n), claimToken(n)]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+  });
+
+  it("un jeton libéré peut être réservé à nouveau", async () => {
+    const n = `n-${Date.now()}-${Math.random()}`;
+    expect(await claimToken(n)).toBe(true);
+    await releaseToken(n);
+    expect(await claimToken(n)).toBe(true);
   });
 });
 
 describe("rateLimit", () => {
-  it("autorise max requêtes puis bloque dans la fenêtre", () => {
+  it("autorise max requêtes puis bloque dans la fenêtre", async () => {
     const key = `test-${Date.now()}-${Math.random()}`;
-    expect(rateLimit(key, 2, 1000)).toBe(true);
-    expect(rateLimit(key, 2, 1000)).toBe(true);
-    expect(rateLimit(key, 2, 1000)).toBe(false);
+    expect(await rateLimit(key, 2, 1000)).toBe(true);
+    expect(await rateLimit(key, 2, 1000)).toBe(true);
+    expect(await rateLimit(key, 2, 1000)).toBe(false);
   });
 
   it("se réinitialise après la fenêtre", async () => {
     const key = `test-${Date.now()}-${Math.random()}`;
-    expect(rateLimit(key, 1, 50)).toBe(true);
-    expect(rateLimit(key, 1, 50)).toBe(false);
+    expect(await rateLimit(key, 1, 50)).toBe(true);
+    expect(await rateLimit(key, 1, 50)).toBe(false);
     await new Promise((r) => setTimeout(r, 60));
-    expect(rateLimit(key, 1, 50)).toBe(true);
+    expect(await rateLimit(key, 1, 50)).toBe(true);
+  });
+
+  it("les clés sont indépendantes", async () => {
+    const a = `a-${Date.now()}-${Math.random()}`;
+    const b = `b-${Date.now()}-${Math.random()}`;
+    expect(await rateLimit(a, 1, 1000)).toBe(true);
+    expect(await rateLimit(a, 1, 1000)).toBe(false);
+    expect(await rateLimit(b, 1, 1000)).toBe(true);
   });
 });

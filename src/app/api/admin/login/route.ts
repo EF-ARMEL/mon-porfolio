@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
 import { verifyCurrentPassword, createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/admin/auth";
 import { createChallenge, twoFactorEmail, maskEmail, sendLoginCodeMail } from "@/lib/admin/twofa";
+import { clientIp, rateLimit } from "@/lib/quiz/security";
 
 export const runtime = "nodejs";
-
-/* Limitation de débit simple, en mémoire (comme le quiz). */
-const hits = new Map<string, number[]>();
-function rateLimit(key: string, max: number, windowMs: number) {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (recent.length >= max) return false;
-  recent.push(now);
-  hits.set(key, recent);
-  return true;
-}
 
 /**
  * Étape 1 de la connexion :
@@ -23,8 +13,7 @@ function rateLimit(key: string, max: number, windowMs: number) {
  *   POST /api/admin/login/verify.
  */
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (!rateLimit(`login:${ip}`, 5, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`login:${clientIp(req)}`, 5, 10 * 60 * 1000))) {
     return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
   }
 

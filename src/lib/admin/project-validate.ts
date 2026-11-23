@@ -1,18 +1,17 @@
 import { z } from "zod";
 
 /**
- * Valeur d'image acceptée : un chemin sous /projects/ (fichier committé, servi
- * statiquement par le serveur) ou une URL https:// absolue. Tout le reste est
- * refusé : http://, un autre dossier, un chemin relatif.
- *
- * Cette règle existe parce qu'en production (Vercel) le disque est en lecture
- * seule : impossible d'y écrire un fichier, donc un chemin invalide produirait
- * forcément une image cassée sur le site.
+ * Valeur d'image acceptée :
+ * - /projects/… : fichier committé dans public/, servi statiquement ;
+ * - /uploads/…  : image envoyée depuis l'admin, stockée en base ;
+ * - https://…   : URL absolue (affichée sans optimisation next/image).
+ * Tout le reste est refusé : http://, un autre dossier, un chemin relatif.
  */
 export function isValidImageValue(value: string): boolean {
   const v = value.trim();
   if (v === "") return true;
   if (v.startsWith("/projects/")) return v.length > "/projects/".length;
+  if (v.startsWith("/uploads/")) return v.length > "/uploads/".length;
   if (v.startsWith("https://")) {
     try {
       return new URL(v).hostname.length > 0;
@@ -36,7 +35,7 @@ export const projectSchema = z.object({
     .trim()
     .max(300)
     .refine((v) => isValidImageValue(v), {
-      message: "Chemin d'image invalide : attendu /projects/… ou une URL https://",
+      message: "Chemin d'image invalide : attendu /projects/…, /uploads/… ou une URL https://",
     })
     .optional(),
   desc: z.string().trim().max(500).optional(),

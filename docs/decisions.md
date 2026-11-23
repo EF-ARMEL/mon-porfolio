@@ -391,6 +391,49 @@ L'utilisation effective sera validée par des tests de performance et d'intégra
 
 ---
 
+## ADR-013 — État de sécurité et images admin stockés en base
+
+### Date
+2026-11-23
+
+### Statut
+Acceptée
+
+### Contexte
+En production (Vercel), le disque est en lecture seule et chaque instance serverless a sa propre mémoire.
+- L'upload d'images de l'admin écrivait dans `public/projects/` : impossible sur Vercel.
+- Le rate-limit (login, 2FA, mot de passe, contact, quiz) et l'usage unique des jetons du quiz étaient en mémoire : contournables en tombant sur une autre instance.
+
+### Décision
+Tout passe par la base libSQL/Turso déjà en place, sans nouveau service :
+- table `uploads` : images envoyées depuis l'admin, servies par `GET /uploads/[name]` avec un cache long (nom unique, jamais réécrit) ;
+- table `rate_hits` : fenêtre glissante partagée (`rateLimit` dans `lib/quiz/security.ts`, réutilisé par toutes les routes) ;
+- table `used_tokens` : réservation atomique du jeton de récompense (`INSERT OR IGNORE`) avant l'envoi, libérée si l'envoi échoue.
+
+### Raisons
+Aucun compte ni dépendance supplémentaire ; volume faible (quelques images de projet, 4 Mo max chacune).
+
+### Conséquences
+Si le nombre d'images grandit beaucoup, migrer vers un stockage objet (Vercel Blob, R2…) : seul `lib/admin/uploads.ts` et la route `/uploads/[name]` seraient à changer.
+
+---
+
+## ADR-014 — Images de fond en WebP redimensionné
+
+### Date
+2026-11-23
+
+### Statut
+Acceptée
+
+### Contexte
+`bg.jpg` (6000×6000, 4,7 Mo) et `bg-about.jpg` (6000×4500, 8,7 Mo) étaient chargés en CSS, donc sans l'optimisation de `next/image`.
+
+### Décision
+Les remplacer par `bg.webp` (2400 px, 16 Ko) et `bg-about.webp` (2000 px, 46 Ko). Toute nouvelle image de fond en CSS doit être redimensionnée et convertie avant d'être committée.
+
+---
+
 # 7. Décisions encore ouvertes
 
 ## Authentification Admin

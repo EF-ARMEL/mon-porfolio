@@ -321,6 +321,7 @@ export default function ProjectCabinet({ projects }: { projects: ProjectRecord[]
                         alt={p.title}
                         fill
                         sizes="(max-width: 719px) 92vw, 300px"
+                        unoptimized={p.image.startsWith("https://")}
                         style={{ objectFit: "cover" }}
                       />
                     )}

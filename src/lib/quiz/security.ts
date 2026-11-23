@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { db, initDb } from "@/lib/db";
 
 /** Même normalisation que pour les variantes acceptées : minuscules, sans accents, sans ponctuation. */
 export const normalize = (s: string) =>
@@ -43,25 +44,51 @@ export function verifyToken(token: string): { n: string } | null {
   }
 }
 
-/* Usage unique du jeton (en mémoire : suffisant pour un portfolio ; voir limites dans le rapport). */
-const used = new Set<string>();
-export const isUsed = (n: string) => used.has(n);
-export const markUsed = (n: string) => {
-  if (used.size > 5000) used.clear();
-  used.add(n);
-};
+/*
+ * Usage unique et limitation de débit : stockés en base, pas en mémoire.
+ * En serverless, chaque instance a sa propre mémoire : un Set/Map local
+ * laisserait rejouer un jeton ou contourner la limite en tombant sur une
+ * autre instance.
+ */
 
-/* Limitation de débit simple, en mémoire. */
-const hits = new Map<string, number[]>();
-export function rateLimit(key: string, max: number, windowMs: number) {
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Réserve un jeton de façon atomique. Retourne false s'il était déjà consommé.
+ * (INSERT OR IGNORE : deux requêtes simultanées ne peuvent pas réussir toutes les deux.)
+ */
+export async function claimToken(n: string): Promise<boolean> {
+  await initDb();
   const now = Date.now();
-  if (hits.size > 5000) hits.clear();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (recent.length >= max) {
-    hits.set(key, recent);
-    return false;
-  }
-  recent.push(now);
-  hits.set(key, recent);
+  // Les jetons expirent en 30 min : inutile de garder la trace au-delà d'un jour.
+  await db().execute({ sql: "DELETE FROM used_tokens WHERE used_at < ?", args: [now - DAY_MS] });
+  const rs = await db().execute({
+    sql: "INSERT OR IGNORE INTO used_tokens (nonce, used_at) VALUES (?, ?)",
+    args: [n, now],
+  });
+  return rs.rowsAffected === 1;
+}
+
+/** Libère un jeton réservé (ex. envoi d'e-mail échoué : l'utilisateur peut réessayer). */
+export async function releaseToken(n: string): Promise<void> {
+  await initDb();
+  await db().execute({ sql: "DELETE FROM used_tokens WHERE nonce = ?", args: [n] });
+}
+
+/** Limitation de débit à fenêtre glissante. Retourne false si la limite est atteinte. */
+export async function rateLimit(key: string, max: number, windowMs: number): Promise<boolean> {
+  await initDb();
+  const now = Date.now();
+  const client = db();
+  await client.batch(
+    [
+      { sql: "DELETE FROM rate_hits WHERE ts < ?", args: [now - DAY_MS] },
+      { sql: "DELETE FROM rate_hits WHERE key = ? AND ts <= ?", args: [key, now - windowMs] },
+    ],
+    "write"
+  );
+  const rs = await client.execute({ sql: "SELECT COUNT(*) AS c FROM rate_hits WHERE key = ?", args: [key] });
+  if (Number(rs.rows[0]?.c ?? 0) >= max) return false;
+  await client.execute({ sql: "INSERT INTO rate_hits (key, ts) VALUES (?, ?)", args: [key, now] });
   return true;
 }

@@ -3,19 +3,9 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
 import { verifyCurrentPassword, hashPassword } from "@/lib/admin/auth";
 import { setSetting } from "@/lib/db";
+import { clientIp, rateLimit } from "@/lib/quiz/security";
 
 export const runtime = "nodejs";
-
-/* Limitation de débit simple, en mémoire (comme la connexion). */
-const hits = new Map<string, number[]>();
-function rateLimit(key: string, max: number, windowMs: number) {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (recent.length >= max) return false;
-  recent.push(now);
-  hits.set(key, recent);
-  return true;
-}
 
 const schema = z.object({
   current: z.string().min(1, "Mot de passe actuel requis."),
@@ -33,8 +23,7 @@ export async function POST(req: Request) {
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (!rateLimit(`password:${ip}`, 5, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`password:${clientIp(req)}`, 5, 10 * 60 * 1000))) {
     return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
   }
 

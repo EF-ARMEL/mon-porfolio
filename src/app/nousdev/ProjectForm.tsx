@@ -42,7 +42,7 @@ export function ProjectForm({
   const [imgBroken, setImgBroken] = useState(false);
 
   const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-  const IMAGE_MAX = 5 * 1024 * 1024;
+  const IMAGE_MAX = 4 * 1024 * 1024;
 
   /** Sélection locale → validation → envoi réel vers /api/admin/upload. */
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +55,7 @@ export function ProjectForm({
       return;
     }
     if (file.size > IMAGE_MAX) {
-      setImgError("Image trop lourde (5 Mo maximum).");
+      setImgError("Image trop lourde (4 Mo maximum).");
       return;
     }
     setUploading(true);
@@ -73,7 +73,7 @@ export function ProjectForm({
       } else {
         setImgError(
           data?.error === "too_large"
-            ? "Image trop lourde (5 Mo maximum)."
+            ? "Image trop lourde (4 Mo maximum)."
             : data?.error === "unsupported_type"
               ? "Format non supporté (JPG, PNG, WebP ou AVIF)."
               : data?.error === "invalid_file"
@@ -124,7 +124,7 @@ export function ProjectForm({
     setError(null);
     // Garde-fou identique à la règle du serveur : on ne part jamais un chemin refusé.
     if (!isValidImageValue(f.image)) {
-      setError("Chemin d'image invalide : il doit commencer par /projects/ ou être une URL https://.");
+      setError("Chemin d'image invalide : il doit commencer par /projects/, /uploads/ ou être une URL https://.");
       return;
     }
     setBusy(true);
@@ -155,7 +155,7 @@ export function ProjectForm({
   const label = "block text-[11px] font-bold uppercase tracking-[0.15em] text-white/50";
   const pathHint = isValidImageValue(f.image)
     ? null
-    : "Chemin d'image invalide : commence par /projects/ ou une URL https://.";
+    : "Chemin d'image invalide : commence par /projects/, /uploads/ ou une URL https://.";
 
   return (
     <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur">
@@ -247,7 +247,7 @@ export function ProjectForm({
               />
             </label>
             <span className="mt-1 block text-[10px] text-white/40">
-              Commence par /projects/ ou https:// · rien n&apos;est écrit sur le disque.
+              Commence par /projects/, /uploads/ ou https:// · les images envoyées sont stockées en base.
             </span>
             {pathHint && (
               <span role="alert" className="mt-1 block text-xs font-bold text-[#ff6b6b]">
@@ -279,7 +279,7 @@ export function ProjectForm({
                     </button>
                   )}
                 </div>
-                <span className="text-[10px] text-white/40">JPG, PNG, WebP ou AVIF · 5 Mo max.</span>
+                <span className="text-[10px] text-white/40">JPG, PNG, WebP ou AVIF · 4 Mo max.</span>
                 {imgError && (
                   <span role="alert" className="text-xs font-bold text-[#ff6b6b]">
                     {imgError}

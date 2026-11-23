@@ -81,6 +81,27 @@ export async function initDb(): Promise<void> {
            consumed   INTEGER NOT NULL DEFAULT 0,
            created_at TEXT NOT NULL DEFAULT (datetime('now'))
          )`,
+        // Limitation de débit partagée entre toutes les instances serverless
+        // (une Map en mémoire serait propre à chaque instance, donc contournable).
+        `CREATE TABLE IF NOT EXISTS rate_hits (
+           key TEXT NOT NULL,
+           ts  INTEGER NOT NULL
+         )`,
+        `CREATE INDEX IF NOT EXISTS idx_rate_hits_key_ts ON rate_hits(key, ts)`,
+        `CREATE INDEX IF NOT EXISTS idx_rate_hits_ts ON rate_hits(ts)`,
+        // Jetons de récompense du quiz déjà consommés (usage unique).
+        `CREATE TABLE IF NOT EXISTS used_tokens (
+           nonce   TEXT PRIMARY KEY,
+           used_at INTEGER NOT NULL
+         )`,
+        // Images de projets envoyées depuis l'admin : le disque Vercel est en
+        // lecture seule, elles sont donc stockées en base et servies par /uploads/[name].
+        `CREATE TABLE IF NOT EXISTS uploads (
+           name       TEXT PRIMARY KEY,
+           mime       TEXT NOT NULL,
+           data       BLOB NOT NULL,
+           created_at TEXT NOT NULL DEFAULT (datetime('now'))
+         )`,
         // Index pour les listes triées par date.
         `CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at DESC)`,
         `CREATE INDEX IF NOT EXISTS idx_quiz_created ON quiz_results(created_at DESC)`,

@@ -36,12 +36,13 @@ describe("projectSchema", () => {
     expect(projectSchema.safeParse({ ...valid, href: "https://exemple.com" }).success).toBe(true);
   });
 
-  it("n'accepte comme image que /projects/… ou une URL https", () => {
+  it("n'accepte comme image que /projects/…, /uploads/… ou une URL https", () => {
     expect(projectSchema.safeParse({ ...valid, image: "/projects/blog.png" }).success).toBe(true);
+    expect(projectSchema.safeParse({ ...valid, image: "/uploads/p-abc-0a1b2c3d.png" }).success).toBe(true);
     expect(projectSchema.safeParse({ ...valid, image: "https://cdn.exemple.com/p.png" }).success).toBe(true);
     // Refusés : autre protocole, autre dossier, chemin relatif, dossier vide.
     expect(projectSchema.safeParse({ ...valid, image: "http://cdn.exemple.com/p.png" }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...valid, image: "/uploads/blog.png" }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...valid, image: "/images/blog.png" }).success).toBe(false);
     expect(projectSchema.safeParse({ ...valid, image: "blog.png" }).success).toBe(false);
     expect(projectSchema.safeParse({ ...valid, image: "/projects/" }).success).toBe(false);
   });

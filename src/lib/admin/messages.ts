@@ -2,7 +2,7 @@ import { initDb, db } from "@/lib/db";
 
 /**
  * Boîte de réception des messages de contact.
- * Chaque message est inséré ici ET envoyé par e-mail (voir actions/contact.ts).
+ * Chaque message est inséré ici ET envoyé par e-mail (voir app/api/contact/route.ts).
  */
 
 export type Message = {

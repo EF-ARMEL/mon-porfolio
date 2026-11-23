@@ -21,7 +21,7 @@
  * repli sur ui-monospace).
  *
  * Plus de fond fixe ni d'écouteur mousemove global (fuite mémoire dans l'ancienne
- * version). L'image /image/bg-about.jpg est gardée, sous un voile sombre.
+ * version). L'image /image/bg-about.webp est gardée, sous un voile sombre.
  */
 
 import React, { useRef } from "react";
@@ -247,7 +247,7 @@ export default function About() {
       className="abt"
       style={{
         backgroundImage:
-          "linear-gradient(rgba(5,5,5,0.72), rgba(5,5,5,0.92)), url('/image/bg-about.jpg')",
+          "linear-gradient(rgba(5,5,5,0.72), rgba(5,5,5,0.92)), url('/image/bg-about.webp')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
