@@ -1,128 +1,112 @@
 "use client";
 
-import React, { useRef } from "react";
+import { useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { PenToolIcon as PenTool } from "@/components/icons/pen-tool";
-import { BoltIcon as Bolt } from "@/components/icons/bolt";
-import { SlidersHorizontalIcon as SlidersHorizontal } from "@/components/icons/sliders-horizontal";
-import { SearchIcon as Search } from "@/components/icons/search";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useTranslation } from "react-i18next";
+import Chars from "@/components/stack/Chars";
+import ToolboxGlyph, { type GlyphKind } from "@/components/toolbox/ToolboxGlyph";
+import "@/components/stack/stack.css";
+import "@/components/toolbox/toolbox.css";
 
-const TOOL_DATA = [
-  {
-    id: "design",
-    title: "Design",
-    label: "Précision",
-    desc: "Architecture visuelle et prototypage haute fidélité.",
-    Icon: PenTool,
-    size: "md:col-span-2 md:row-span-1",
-    color: "#FFD000",
-  },
-  {
-    id: "perf",
-    title: "Perf",
-    label: "Vitesse",
-    desc: "Optimisation Core Web Vitals et 60fps constant.",
-    Icon: Bolt,
-    size: "md:col-span-1 md:row-span-1",
-    color: "#8B5CF6",
-  },
-  {
-    id: "config",
-    title: "Tuning",
-    label: "Rigueur",
-    desc: "Configuration sur-mesure et systèmes évolutifs.",
-    Icon: SlidersHorizontal,
-    size: "md:col-span-1 md:row-span-2",
-    color: "#FF6A00",
-  },
-  {
-    id: "research",
-    title: "Explore",
-    label: "Curiosité",
-    desc: "Veille technologique et résolution de problèmes complexes.",
-    Icon: Search,
-    size: "md:col-span-1 md:row-span-1",
-    color: "#FFFFFF",
-  },
-  {
-    id: "vibe",
-    title: "Vibe",
-    label: "Sensation",
-    desc: "L'art de transformer du code en expérience émotionnelle.",
-    Icon: Bolt,
-    size: "md:col-span-2 md:row-span-1",
-    color: "#FFD000",
-  },
+gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+type Reflex = { id: GlyphKind; title: string; label: string; desc: string };
+
+const REFLEXES: Reflex[] = [
+  { id: "design", title: "Design", label: "Précision", desc: "Architecture visuelle et prototypage haute fidélité : chaque pixel a une intention." },
+  { id: "perf", title: "Perf", label: "Vitesse", desc: "Core Web Vitals au vert et 60 images par seconde constantes, même quand ça bouge beaucoup." },
+  { id: "tuning", title: "Tuning", label: "Rigueur", desc: "Configuration sur-mesure et systèmes évolutifs, réglés au cran près plutôt qu'au jugé." },
+  { id: "explore", title: "Explore", label: "Curiosité", desc: "Veille technologique et résolution de problèmes complexes : je vais chercher la bonne réponse." },
+  { id: "vibe", title: "Vibe", label: "Sensation", desc: "L'art de transformer du code en expérience émotionnelle, celle dont on se souvient." },
 ];
 
+/**
+ * Section « Méthode » — cinq réflexes en lames verticales.
+ * Desktop : la lame survolée / focalisée s'élargit et révèle son glyphe animé.
+ * Mobile : accordéon vertical. Une lame est toujours ouverte (jamais de section vide).
+ */
 export default function Toolbox() {
-  const container = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+  const [active, setActive] = useState(0);
+  const root = useRef<HTMLElement>(null);
 
-  useGSAP(() => {
-    gsap.from(".tool-card", {
-      y: 40,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.1,
-      ease: "expo.out",
-      immediateRender: false,
-      scrollTrigger: {
-        trigger: container.current,
-        start: "top 85%",
-        once: true,
-      },
-    });
-  }, { scope: container });
+  const title1 = t("toolbox.title_1", "Ma façon");
+  const title2 = t("toolbox.title_2", "de jouer");
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const q = gsap.utils.selector(root);
+      gsap
+        .timeline({ scrollTrigger: { trigger: root.current, start: "top 78%", toggleActions: "play none none none" } })
+        .from(q(".stk-meta i"), { scaleX: 0, duration: 1.2, ease: "expo.inOut" }, 0)
+        .from(q(".stk-meta > *:not(i)"), { opacity: 0, x: -14, duration: 0.9, stagger: 0.08, ease: "expo.out" }, 0.1)
+        .from(q(".stk-ch"), { yPercent: 118, rotate: 7, duration: 1.35, stagger: 0.032, ease: "expo.out" }, 0.05)
+        .from(
+          q(".tbx-blade"),
+          { clipPath: "inset(100% 0% 0% 0%)", duration: 1.3, stagger: 0.09, ease: "expo.inOut", clearProps: "clipPath" },
+          0.3
+        )
+        .from(q(".tbx-num"), { yPercent: 100, opacity: 0, duration: 1, stagger: 0.09, ease: "expo.out" }, 0.8);
+    },
+    { scope: root }
+  );
 
   return (
-    <section className="relative w-full py-20 bg-black overflow-hidden">
-      <div
-        ref={container}
-        className="relative w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-4 px-[5vw]"
-      >
-        {TOOL_DATA.map((tool) => (
-          <div
-            key={tool.id}
-            className={`tool-card group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 p-5 md:p-6 transition-all duration-500 hover:border-white/20 hover:bg-zinc-900/80 ${tool.size}`}
-          >
-            {/* Radial Glow Effect */}
-            <div
-              className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              style={{
-                background: `radial-gradient(circle at var(--x, 50%) var(--y, 50%), ${tool.color}33 0%, transparent 70%)`
-              }}
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                e.currentTarget.style.setProperty('--x', `${x}%`);
-                e.currentTarget.style.setProperty('--y', `${y}%`);
-              }}
-            />
+    <section ref={root} id="methode" className="stk tbx" aria-labelledby="tbx-title">
+      <header className="tbx-head">
+        <p className="stk-meta">
+          <b>(05)</b>
+          <i aria-hidden />
+          <span>{t("toolbox.eyebrow", "Méthode")}</span>
+          <span>05 {t("toolbox.reflexes", "réflexes")}</span>
+        </p>
+        <h2 id="tbx-title" className="stk-title tbx-title" aria-label={`${title1} ${title2}.`}>
+          <span className="stk-ln">
+            <Chars text={title1} />
+          </span>
+          <span className="stk-ln stk-ln--outline">
+            <Chars text={title2} />
+            <span className="stk-ch stk-dot" aria-hidden />
+          </span>
+        </h2>
+      </header>
 
-            <div className="relative z-10 flex h-full flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <div className="p-3 rounded-2xl bg-white/5 group-hover:bg-white/10 transition-colors duration-300">
-                  <tool.Icon size={24} color={tool.color} />
-                </div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 group-hover:text-white transition-colors">
-                  {tool.label}
+      <ul className="tbx-blades">
+        {REFLEXES.map((r, i) => {
+          const on = active === i;
+          const title = t(`toolbox.${r.id}.title`, r.title);
+          const label = t(`toolbox.${r.id}.label`, r.label);
+          return (
+            <li key={r.id} className="tbx-blade" data-on={on}>
+              <button
+                type="button"
+                className="tbx-btn"
+                aria-expanded={on}
+                aria-controls={`tbx-body-${r.id}`}
+                onPointerEnter={(e) => e.pointerType === "mouse" && setActive(i)}
+                onFocus={() => setActive(i)}
+                onClick={() => setActive(i)}
+              >
+                <span className="tbx-num">{String(i + 1).padStart(2, "0")}</span>
+                <span className="tbx-vert" aria-hidden>
+                  {title}
                 </span>
+                <span className="tbx-label">{label}</span>
+                <span className="tbx-name">{title}</span>
+              </button>
+              <div id={`tbx-body-${r.id}`} className="tbx-body" role="region" aria-label={title}>
+                <div className="tbx-body-in">
+                  <ToolboxGlyph kind={r.id} on={on} />
+                  <p className="tbx-desc">{t(`toolbox.${r.id}.desc`, r.desc)}</p>
+                </div>
               </div>
-
-              <div className="mt-8">
-                <h3 className="font-heading text-2xl uppercase leading-none mb-2">
-                  {tool.title}
-                </h3>
-                <p className="font-body text-sm text-zinc-400 leading-relaxed">
-                  {tool.desc}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

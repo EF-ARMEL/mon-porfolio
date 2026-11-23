@@ -1,0 +1,480 @@
+/* ─────────────────────────────────────────────────────────────
+   Section Méthode — « cinq réflexes » en lames.
+   Hérite des jetons et du titre de la section Stack (.stk).
+   ───────────────────────────────────────────────────────────── */
+.tbx {
+  padding-top: clamp(40px, 8vh, 96px);
+}
+.tbx::before {
+  /* Halo contenu dans la section : sinon la section suivante le coupe net. */
+  inset: 30% auto auto -20%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(255, 208, 0, 0.1), transparent 62%);
+}
+.tbx-head {
+  position: relative;
+  margin-bottom: clamp(40px, 7vh, 80px);
+}
+.tbx-title {
+  font-size: clamp(3rem, 9.5vw, 9rem);
+}
+
+/* ───── Lames ───── */
+.tbx-blades {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--stk-line);
+}
+.tbx-blade {
+  position: relative;
+  border-bottom: 1px solid var(--stk-line);
+}
+.tbx-btn {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 84px;
+  padding: 12px 4px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tbx-btn:focus-visible {
+  outline: 2px solid var(--stk-yellow);
+  outline-offset: -2px;
+}
+.tbx-num {
+  display: inline-block;
+  font-family: var(--stk-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.5s var(--stk-out);
+}
+.tbx-blade[data-on="true"] .tbx-num {
+  color: var(--stk-orange);
+}
+.tbx-name {
+  font-family: var(--font-heading);
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+.tbx-label {
+  grid-column: 3;
+  grid-row: 1;
+  font-family: var(--stk-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.5s var(--stk-out);
+}
+.tbx-blade[data-on="true"] .tbx-label {
+  color: var(--stk-yellow);
+}
+.tbx-vert {
+  display: none;
+}
+
+/* Corps : accordéon sur mobile. */
+.tbx-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.7s var(--stk-ease);
+}
+.tbx-blade[data-on="true"] .tbx-body {
+  grid-template-rows: 1fr;
+}
+.tbx-body-in {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+.tbx-desc {
+  margin: 0;
+  padding: 8px 4px 24px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+.tbx-glyph {
+  width: 132px;
+  aspect-ratio: 1;
+  margin: 0 0 20px;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.5s var(--stk-out), transform 0.8s var(--stk-out);
+}
+.tbx-blade[data-on="true"] .tbx-glyph {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.25s;
+}
+
+/* ───── Desktop : lames verticales qui s'élargissent ───── */
+@media (min-width: 900px) {
+  .tbx-blades {
+    flex-direction: row;
+    height: clamp(460px, 66vh, 620px);
+    border-top: 0;
+    border-left: 1px solid var(--stk-line);
+  }
+  .tbx-blade {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    border-bottom: 0;
+    border-right: 1px solid var(--stk-line);
+    transition: flex-grow 0.95s var(--stk-ease), background-color 0.6s var(--stk-out);
+  }
+  .tbx-blade[data-on="true"] {
+    flex-grow: 4.2;
+    background: #070707;
+  }
+  /* Filet orange en haut de la lame active. */
+  .tbx-blade::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: var(--stk-orange);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.9s var(--stk-ease);
+    z-index: 2;
+  }
+  .tbx-blade[data-on="true"]::before {
+    transform: scaleX(1);
+  }
+
+  .tbx-btn {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+    min-height: 0;
+    z-index: 1;
+  }
+  .tbx-num {
+    position: absolute;
+    left: 24px;
+    top: 26px;
+    font-size: 13px;
+  }
+  .tbx-label {
+    position: absolute;
+    left: 24px;
+    top: 52px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s var(--stk-out), transform 0.6s var(--stk-out), color 0.5s var(--stk-out);
+  }
+  .tbx-blade[data-on="true"] .tbx-label {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.35s;
+  }
+
+  /* Titre vertical (lame fermée) ⇄ titre horizontal géant (lame ouverte). */
+  .tbx-vert {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    writing-mode: vertical-rl;
+    transform: translateX(-50%) rotate(180deg);
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 3.4vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    transition: opacity 0.4s var(--stk-out), color 0.4s var(--stk-out);
+  }
+  .tbx-btn:hover .tbx-vert {
+    color: var(--stk-orange);
+  }
+  .tbx-blade[data-on="true"] .tbx-vert {
+    opacity: 0;
+  }
+  .tbx-name {
+    position: absolute;
+    left: 24px;
+    bottom: 18px;
+    font-size: clamp(3rem, 6.2vw, 6.8rem);
+    line-height: 0.9;
+    white-space: nowrap;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(30%);
+    transition: clip-path 0.8s var(--stk-ease), transform 0.8s var(--stk-ease);
+  }
+  .tbx-blade[data-on="true"] .tbx-name {
+    clip-path: inset(-10% -5% -15% 0);
+    transform: none;
+    transition-delay: 0.3s;
+  }
+
+  /* Corps : glyphe et description posés dans la lame, toujours affichés (pas d'accordéon). */
+  .tbx-body {
+    position: absolute;
+    inset: 0;
+    display: block;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .tbx-body-in {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: min(46%, 270px);
+    display: block;
+    overflow: visible;
+  }
+  .tbx-glyph {
+    width: 100%;
+    margin: 0;
+  }
+  .tbx-desc {
+    margin-top: 18px;
+    padding: 0;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s var(--stk-out), transform 0.7s var(--stk-out);
+  }
+  .tbx-blade[data-on="true"] .tbx-desc {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.45s;
+  }
+}
+
+/* ───── Glyphes ───── */
+.tbx-g {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.tbx-blade:not([data-on="true"]) .tbx-g,
+.tbx-blade:not([data-on="true"]) .tbx-g * {
+  animation-play-state: paused !important;
+}
+
+/* Design : la courbe se trace sur la grille. */
+.tbx-grid {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-dasharray: 2 4;
+}
+.tbx-handle {
+  stroke: var(--stk-yellow);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+.tbx-curve {
+  fill: none;
+  stroke: var(--stk-orange);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.6s var(--stk-ease) 0.35s;
+}
+.tbx-blade[data-on="true"] .tbx-curve {
+  stroke-dashoffset: 0;
+}
+.tbx-node {
+  fill: #000;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.tbx-knob {
+  fill: var(--stk-yellow);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tbx-pulse 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+@keyframes tbx-pulse {
+  to {
+    transform: scale(1.6);
+  }
+}
+
+/* Perf : compteur FPS + temps de rendu qui défilent. */
+.tbx-g--perf {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.tbx-fps {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 5vw, 5.4rem);
+  line-height: 0.9;
+  color: var(--stk-orange);
+  font-variant-numeric: tabular-nums;
+}
+.tbx-fps small {
+  font-family: var(--stk-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.tbx-frames {
+  position: relative;
+  height: 38%;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.tbx-frames-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  width: 200%;
+  height: 100%;
+  animation: tbx-scroll 5s linear infinite;
+}
+.tbx-frames-track i {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.35);
+}
+.tbx-budget {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18%;
+  border-top: 1px dashed var(--stk-yellow);
+}
+@keyframes tbx-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Tuning : curseurs qui se calent. */
+.tbx-g--tuning {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22%;
+  padding: 8% 4%;
+}
+.tbx-slider {
+  position: relative;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+}
+.tbx-slider:nth-child(1) { --a: 12%; --b: 78%; --t: 2.6s; }
+.tbx-slider:nth-child(2) { --a: 64%; --b: 30%; --t: 3.1s; }
+.tbx-slider:nth-child(3) { --a: 22%; --b: 55%; --t: 2.2s; }
+.tbx-slider:nth-child(4) { --a: 86%; --b: 46%; --t: 3.4s; }
+.tbx-slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--a);
+  background: var(--stk-orange);
+  animation: tbx-fill var(--t) cubic-bezier(0.77, 0, 0.18, 1) infinite alternate;
+}
+.tbx-slider-knob {
+  position: absolute;
+  top: 50%;
+  left: var(--a);
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: #000;
+  border: 2px solid var(--stk-yellow);
+  animation: tbx-knob var(--t) cubic-bezier(0.77, 0, 0.18, 1) infinite alternate;
+}
+@keyframes tbx-fill {
+  to {
+    width: var(--b);
+  }
+}
+@keyframes tbx-knob {
+  to {
+    left: var(--b);
+  }
+}
+
+/* Explore : radar. */
+.tbx-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+}
+.tbx-sweep {
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+  animation: stk-spin 3.6s linear infinite;
+}
+.tbx-sweep-cone {
+  fill: rgba(255, 106, 0, 0.22);
+}
+.tbx-sweep-line {
+  stroke: var(--stk-orange);
+  stroke-width: 2;
+}
+.tbx-blip {
+  fill: var(--stk-yellow);
+  opacity: 0;
+  animation: tbx-blip 3.6s ease-out infinite;
+}
+@keyframes tbx-blip {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.15;
+  }
+}
+
+/* Vibe : ondes superposées. */
+.tbx-g--vibe {
+  position: relative;
+  overflow: hidden;
+  /* Les ondes naissent et meurent dans le noir plutôt que d'être coupées net. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.tbx-wave {
+  position: absolute;
+  left: 0;
+  top: 15%;
+  width: 200%;
+  height: 70%;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  animation: tbx-scroll var(--t, 3s) linear infinite;
+}
+.tbx-wave path {
+  vector-effect: non-scaling-stroke;
+}
+.tbx-wave--0 { stroke: var(--stk-orange); --t: 2.4s; top: 10%; height: 80%; }
+.tbx-wave--1 { stroke: var(--stk-yellow); --t: 3.8s; opacity: 0.75; top: 25%; height: 50%; }
+.tbx-wave--2 { stroke: #fff; --t: 5.5s; opacity: 0.3; top: 38%; height: 24%; }
