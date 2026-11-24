@@ -82,8 +82,8 @@
   width: max-content; /* le masque suit le mot, pas la colonne : rien n'est rogné à droite */
   max-width: 100%;
   overflow: visible clip;
-  /* Marge haute pour les accents (Î, À) sans changer l'interligne visuel. */
-  padding: 0.16em 0 0.12em;
+  /* Haut : accents (Î, À) · droite : la dernière lettre déborde du crénage serré · bas : cédille. */
+  padding: 0.16em 0.08em 0.12em 0;
   margin: -0.16em 0 -0.08em; /* air pour Î, À et la cédille de Ç */
 }
 .stk-title .stk-ch {

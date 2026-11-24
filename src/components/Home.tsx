@@ -12,10 +12,13 @@ import Testimonials from "@/components/sections/Testimonials";
 import ContactTerminalSession from "@/components/contact/ContactTerminalSession";
 import Footer from "@/components/layout/Footer";
 import MotionLayer from "@/components/motion/MotionLayer";
+import { useFitTitles } from "@/hooks/useFitTitles";
 import type { ProjectRecord } from "@/lib/admin/projects";
 
 export default function Home({ projects }: { projects: ProjectRecord[] }) {
   const [isLoading, setIsLoading] = useState(true);
+  // Les grands titres de section tiennent toujours dans la largeur (mobile compris).
+  useFitTitles();
 
   // Filet de sécurité : le preloader masque le site entier (opacity-0).
   // Si l'animation GSAP ne se termine jamais (JS bloqué, onglet gelé…),
