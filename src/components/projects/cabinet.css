@@ -600,8 +600,14 @@
     padding: 8px 12px;
     gap: 3px;
   }
+  /* Une seule ligne : pas de césure (« WE-… »), le nom est coupé net par « … ». */
   .pcab-dr-name {
-    -webkit-line-clamp: 1;
+    display: block;
+    min-width: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    hyphens: manual;
+    overflow-wrap: normal;
   }
   .pcab-dr-handle {
     bottom: 6px;
@@ -614,7 +620,11 @@
     align-items: center;
     gap: 10px;
   }
+  .pcab-dr-num {
+    flex: none;
+  }
   .pcab-dr-name {
+    flex: 1 1 auto;
     font-size: 11px;
   }
   .pcab-dr-handle {
