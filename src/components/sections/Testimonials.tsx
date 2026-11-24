@@ -105,7 +105,7 @@ export default function Testimonials() {
           duration: 1.15,
           stagger: 0.09,
           ease: "expo.out",
-          scrollTrigger: { trigger: root.current, start: "clamp(top 85%)", once: true },
+          scrollTrigger: { trigger: root.current, start: "clamp(top 85%)", toggleActions: "play none none none" },
         }
       );
 
@@ -120,7 +120,7 @@ export default function Testimonials() {
           duration: 1,
           stagger: 0.09,
           ease: "expo.out",
-          scrollTrigger: { trigger: root.current, start: "clamp(top 78%)", once: true },
+          scrollTrigger: { trigger: root.current, start: "clamp(top 78%)", toggleActions: "play none none none" },
         }
       );
 

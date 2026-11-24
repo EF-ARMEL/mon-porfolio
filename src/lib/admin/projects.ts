@@ -99,7 +99,8 @@ const SEED: DetailProject[] = [
       ],
       facts: ["Rôle — Conception éditoriale & développement", "Statut — En préparation", "Année — 2026"],
     },
-    from: "#7c3aed",
+    image: "/projects/blog.png",
+    from: "#1a1a1a",
     to: "#FF6A00",
   },
 ];

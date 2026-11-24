@@ -440,3 +440,28 @@ Les remplacer par `bg.webp` (2400 px, 16 Ko) et `bg-about.webp` (2000 px, 46 Ko)
 L'authentification pour l'espace administration reste à choisir.
 - **Option étudiée** : Auth.js (v5).
 - **Statut** : En cours d'évaluation.
+
+## ADR-015 — Couche de motion globale et casier « sticky »
+
+### Date
+2026-11-24
+
+### Statut
+Acceptée
+
+### Décision
+- `src/components/motion/MotionLayer.tsx` (monté une fois dans `Home`) porte le motion transversal : barre de progression de lecture, « baguette » du chef d'orchestre (trace effilée du geste + temps fort au clic, canvas ; le curseur natif est conservé ; ignorée sur `data-cursor="none"` et dans les champs de saisie). Le curseur point + anneau a été écarté : trop standard, aimantation des éléments `[data-magnetic]`, inclinaison des grands titres `[data-skew]` selon la vitesse Lenis. Désactivé sur tactile et sous `prefers-reduced-motion`.
+- Section Projets : la scène est en `position: sticky` (pas de pin GSAP), pilotée par une timeline `scrub` sur la piste. Plus robuste avec Lenis et sur mobile ; les tiroirs sont des boutons qui sautent au projet.
+- Règle : aucun `scrollTrigger.once: true` (crash au rechargement en milieu de page) → `toggleActions: "play none none none"`.
+- Les animations de sortie du Hero utilisent `yPercent` / `scale` / l'opacité d'un calque parent pour ne pas écraser la parallaxe souris (`x`/`y`).
+
+### Conséquences
+Tout nouveau bouton important peut recevoir `data-magnetic`, tout grand titre `data-skew`, sans code supplémentaire.
+
+### Casier : adaptatif au nombre de projets (ajout depuis l'admin)
+- longueur de scroll par projet : 90svh → 55svh selon le nombre (variable CSS `--seg`) ;
+- desktop : tiroirs en grille qui se partagent la hauteur, 2 colonnes au-delà de 9 projets ; contenu des tiroirs piloté par container queries (nom 2 lignes → 1 ligne → numéro seul) ;
+- mobile : grille de 5 colonnes (6 au-delà de 10) ;
+- pile : 3 fiches visibles derrière la fiche active, les plus anciennes s'effacent ;
+- contenus : titre réduit selon sa longueur + césure FR, accroche/description limitées en lignes, 5 tags + « +N », couverture typographique sans visuel, état vide à 0 projet.
+- Vérifié avec 3, 8 et 12 projets (desktop 1440×900 / 1280×720, mobile 390).

@@ -40,7 +40,7 @@ export const projectSchema = z.object({
     .optional(),
   desc: z.string().trim().max(500).optional(),
   status: z.string().trim().max(60).optional(),
-  from: z.string().trim().max(20).default("#7c3aed"),
+  from: z.string().trim().max(20).default("#1a1a1a"),
   to: z.string().trim().max(20).default("#FF6A00"),
   detail: z.object({
     objective: z.string().trim().max(800).default(""),

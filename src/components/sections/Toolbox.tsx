@@ -63,7 +63,7 @@ export default function Toolbox() {
           <span>{t("toolbox.eyebrow", "Méthode")}</span>
           <span>05 {t("toolbox.reflexes", "réflexes")}</span>
         </p>
-        <h2 id="tbx-title" className="stk-title tbx-title" aria-label={`${title1} ${title2}.`}>
+        <h2 id="tbx-title" className="stk-title tbx-title" data-skew aria-label={`${title1} ${title2}.`}>
           <span className="stk-ln">
             <Chars text={title1} />
           </span>

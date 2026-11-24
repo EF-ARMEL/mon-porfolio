@@ -28,7 +28,7 @@ export function ProjectForm({
     image: project?.image ?? "",
     desc: project?.desc ?? "",
     status: project?.status ?? "",
-    from: project?.from ?? "#7c3aed",
+    from: project?.from ?? "#1a1a1a",
     to: project?.to ?? "#FF6A00",
     objective: project?.detail.objective ?? "",
     facts: (project?.detail.facts ?? []).join("\n"),

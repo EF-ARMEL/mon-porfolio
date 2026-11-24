@@ -117,7 +117,7 @@ export default function About() {
             duration: 1.15,
             ease: "expo.out",
             stagger: { each: 0.028 },
-            scrollTrigger: { trigger: headline, start: "top 88%", once: true },
+            scrollTrigger: { trigger: headline, start: "top 88%", toggleActions: "play none none none" },
           }
         );
 
@@ -130,7 +130,7 @@ export default function About() {
             duration: 1.5,
             ease: "expo.inOut",
             delay: 0.45,
-            scrollTrigger: { trigger: headline, start: "top 88%", once: true },
+            scrollTrigger: { trigger: headline, start: "top 88%", toggleActions: "play none none none" },
           }
         );
 
@@ -165,7 +165,7 @@ export default function About() {
             x: 0,
             duration: 0.9,
             ease: "power3.out",
-            scrollTrigger: { trigger: q("[data-reveal]")[0], start: "top 88%", once: true },
+            scrollTrigger: { trigger: q("[data-reveal]")[0], start: "top 88%", toggleActions: "play none none none" },
           }
         );
 
@@ -216,7 +216,7 @@ export default function About() {
               yPercent: 0,
               duration: 1.1,
               ease: "expo.out",
-              scrollTrigger: { trigger: row, start: "top 72%", once: true },
+              scrollTrigger: { trigger: row, start: "top 72%", toggleActions: "play none none none" },
             }
           );
           gsap.fromTo(
@@ -228,7 +228,7 @@ export default function About() {
               duration: 1,
               ease: "power3.out",
               stagger: 0.08,
-              scrollTrigger: { trigger: row, start: "top 68%", once: true },
+              scrollTrigger: { trigger: row, start: "top 68%", toggleActions: "play none none none" },
             }
           );
         });

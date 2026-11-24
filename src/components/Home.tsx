@@ -11,6 +11,7 @@ import Quiz from "@/components/sections/Quiz";
 import Testimonials from "@/components/sections/Testimonials";
 import ContactTerminalSession from "@/components/contact/ContactTerminalSession";
 import Footer from "@/components/layout/Footer";
+import MotionLayer from "@/components/motion/MotionLayer";
 import type { ProjectRecord } from "@/lib/admin/projects";
 
 export default function Home({ projects }: { projects: ProjectRecord[] }) {
@@ -28,6 +29,8 @@ export default function Home({ projects }: { projects: ProjectRecord[] }) {
   return (
     <>
       {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
+
+      <MotionLayer />
 
       {/* Site-wide Grain Overlay */}
       <div className="grain-overlay" />

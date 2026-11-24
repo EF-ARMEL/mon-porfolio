@@ -4,9 +4,12 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
 import ConductorButton from "@/components/ConductorButton";
 import { getLenis } from "@/components/providers/SmoothScrollProvider";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 interface HeroProps {
   startAnimation?: boolean;
@@ -155,6 +158,27 @@ export default function Hero({ startAnimation = false }: HeroProps) {
     else target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /* ---------- Sortie au scroll : profondeur de champ ----------
+     Le titre géant file vers le haut, la photo recule, l'interface s'efface :
+     la section suivante semble glisser par-dessus. Propriétés distinctes
+     (yPercent / scale / opacité du calque UI) pour ne pas écraser la parallaxe
+     souris (x / y) ni l'intro du bouton (y / opacity). */
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const ui = containerRef.current?.querySelector("[data-hero-ui]");
+      gsap
+        .timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: { trigger: containerRef.current, start: "top top", end: "bottom top", scrub: 0.6 },
+        })
+        .to(textWrapperRef.current, { yPercent: -32 }, 0)
+        .to(imageWrapperRef.current, { yPercent: 12, scale: 0.9, transformOrigin: "50% 100%" }, 0)
+        .to(ui ?? [], { yPercent: -18, opacity: 0 }, 0);
+    },
+    { scope: containerRef }
+  );
+
   /* ---------- Parallaxe souris (desktop) ---------- */
   useGSAP(
     () => {
@@ -188,7 +212,7 @@ export default function Hero({ startAnimation = false }: HeroProps) {
       id="hero"
       ref={containerRef}
       style={{ visibility: "hidden" }}
-      className="relative min-h-[100svh] w-full overflow-x-clip rounded-[28px]"
+      className="relative min-h-[100svh] w-full overflow-clip rounded-[28px]"
     >
       {/* Couche 1 : texte géant */}
       <div
@@ -230,7 +254,7 @@ export default function Hero({ startAnimation = false }: HeroProps) {
       </div>
 
       {/* Couche 3 : interface */}
-      <div className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-end p-8 md:p-16">
+      <div data-hero-ui className="pointer-events-none absolute inset-0 z-30 flex flex-col justify-end p-8 md:p-16">
         <div className="flex flex-col items-end justify-between gap-12 md:flex-row">
           <div className="pointer-events-auto flex max-w-[500px] flex-col items-start">
             <div className="overflow-hidden">
@@ -247,10 +271,12 @@ export default function Hero({ startAnimation = false }: HeroProps) {
 
           <div className="pointer-events-auto flex max-w-[340px] flex-col items-end">
             <ConductorButton align="right" />
+            {/* Enveloppe magnétique : le bouton garde son animation d'intro (y / opacité). */}
+            <span data-magnetic className="mt-6 inline-block">
             <button
               ref={ctaButtonRef}
               onClick={scrollToContact}
-              className="group relative overflow-hidden rounded-full bg-brand-orange px-6 py-3 font-bold text-brand-black mt-6 transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-95"
+              className="group relative overflow-hidden rounded-full bg-brand-orange px-6 py-3 font-bold text-brand-black transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-95"
             >
               <span
                 aria-hidden="true"
@@ -266,6 +292,7 @@ export default function Hero({ startAnimation = false }: HeroProps) {
                 </span>
               </span>
             </button>
+            </span>
           </div>
         </div>
       </div>

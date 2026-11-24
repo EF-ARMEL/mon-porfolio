@@ -489,7 +489,7 @@ export default function Quiz() {
           stagger: 0.1,
           ease: "expo.out",
           immediateRender: false,
-          scrollTrigger: { trigger: root.current, start: "clamp(top 70%)", once: true },
+          scrollTrigger: { trigger: root.current, start: "clamp(top 70%)", toggleActions: "play none none none" },
         }
       );
     },

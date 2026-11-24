@@ -1,260 +1,270 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import { X } from "lucide-react";
+import "@/components/conductor/conductor.css";
 
-const TEXT =
-  "Au-delà du développement traditionnel, j'articule les intelligences artificielles pour décupler les capacités de vos plateformes. Cette démarche s'accompagne d'une exigence absolue quant à l'ergonomie et au raffinement visuel de vos interfaces.";
+/** Manifeste découpé en segments : les mots-clés sont surlignés. */
+const SEGMENTS: { t: string; mark?: boolean }[] = [
+  { t: "Au-delà du développement traditionnel, j'articule les" },
+  { t: "intelligences artificielles", mark: true },
+  { t: "pour décupler les capacités de vos plateformes. Cette démarche s'accompagne d'une exigence absolue quant à l'" },
+  { t: "ergonomie", mark: true },
+  { t: "et au" },
+  { t: "raffinement visuel", mark: true },
+  { t: "de vos interfaces." },
+];
 
-type Props = {
-  label?: string;
-  align?: "left" | "right";
-};
+type Mode = "pop" | "sheet";
+type Props = { label?: string; align?: "left" | "right" };
+
+const noopSubscribe = () => () => {};
+const GAP = 14; // espace bouton ↔ panneau
+const EDGE = 16; // marge minimale avec les bords de l'écran
 
 /**
- * Bouton « Chef d'Orchestre » + panneau-manifeste.
- *
- * Design :
- * - pastille sombre à liseré violet, pastille orange animée = repère visuel
- *   que le bouton « ouvre » quelque chose (affordance) ;
- * - cible tactile ≥ 48 px sur mobile, libellé jamais tronqué ;
- * - panneau violet profond, texte crème haute lisibilité, accent orange ;
- * - le panneau se replie au-dessus du bouton s'il ne passe pas sous le viewport,
- *   se ferme au défilement / Échap / perte de focus.
+ * Bouton « Chef d'Orchestre » + manifeste.
+ * - Desktop (pointeur précis, ≥ 768 px) : popover rendu dans <body> (jamais rogné
+ *   par le Hero), calé sur le bouton, contraint dans l'écran, au-dessus ou en dessous.
+ * - Mobile / tactile : bottom sheet pleine largeur avec voile, bouton fermer, Échap.
  */
-export default function ConductorButton({
-  label = "Chef d'Orchestre",
-  align = "left",
-}: Props) {
-  const root = useRef<HTMLDivElement>(null);
+export default function ConductorButton({ label = "Chef d'Orchestre", align = "left" }: Props) {
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const closeOnScroll = useRef<(() => void) | null>(null);
-  const tl = useRef<gsap.core.Timeline | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const closeBtn = useRef<HTMLButtonElement>(null);
+  const hideTimer = useRef(0);
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("pop");
+  const [pos, setPos] = useState<{ left: number; top: number; maxH: number; side: "above" | "below" }>({
+    left: EDGE,
+    top: EDGE,
+    maxH: 600,
+    side: "below",
+  });
 
-  useEffect(
-    () => () => {
-      if (closeOnScroll.current) window.removeEventListener("scroll", closeOnScroll.current);
-    },
-    []
-  );
+  // Vrai uniquement côté client (le portail vers <body> n'existe pas au rendu serveur).
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
-  useGSAP(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isSheet = () =>
+    window.matchMedia("(max-width: 767px)").matches || !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-    const ctx = gsap.context(() => {
-      const q = gsap.utils.selector(root);
+  /**
+   * Position du popover : toujours dans l'écran et jamais par-dessus le bouton.
+   * Côté choisi = celui qui a la place (sinon le plus grand) ; la hauteur est
+   * bornée à l'espace disponible, le contenu défile alors à l'intérieur.
+   */
+  const place = useCallback(() => {
+    const b = btn.current;
+    const p = panel.current;
+    if (!b || !p) return;
+    const r = b.getBoundingClientRect();
+    const w = p.offsetWidth;
+    const h = p.scrollHeight; // hauteur naturelle, indépendante du max-height courant
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const wanted = align === "right" ? r.right - w : r.left;
+    const left = Math.min(Math.max(EDGE, wanted), vw - w - EDGE);
+    const below = vh - r.bottom - GAP - EDGE;
+    const above = r.top - GAP - EDGE;
+    const side = below >= h || below >= above ? "below" : "above";
+    const maxH = Math.max(220, side === "below" ? below : above);
+    const shown = Math.min(h, maxH);
+    const top = side === "below" ? r.bottom + GAP : r.top - GAP - shown;
+    setPos({ left, top: Math.max(EDGE, top), maxH, side });
+  }, [align]);
 
-      const t = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
-
-      // 1. Ignition : le bouton s'enfonce.
-      t.to(btn.current, { scale: 0.96, duration: 0.2 }, 0)
-        // 2. Expansion « portal » du panneau.
-        .fromTo(
-          q(".panel"),
-          { clipPath: "circle(0% at 50% 50%)", autoAlpha: 0 },
-          { clipPath: "circle(150% at 50% 50%)", autoAlpha: 1, duration: 1, ease: "expo.inOut" },
-          0.05
-        )
-        // 3. Scan : le bâton lumineux parcourt le texte.
-        .fromTo(
-          q(".scan-line"),
-          { top: "-6%", opacity: 0 },
-          { top: "106%", opacity: 1, duration: 1.2, ease: "power2.inOut" },
-          0.35
-        )
-        // 4. Révélation typographique synchronisée au scan.
-        .fromTo(
-          q(".word"),
-          { opacity: 0, y: 16, filter: "blur(8px)" },
-          {
-            opacity: 1,
-            y: 0,
-            filter: "blur(0px)",
-            duration: 0.7,
-            stagger: 0.025,
-            ease: "power3.out",
-          },
-          0.45
-        )
-        // 5. Signature en fin de lecture.
-        .fromTo(q(".panel-sign"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.9);
-
-      tl.current = t;
-
-      // Magnétisme 3D au pointeur fin uniquement.
-      if (!reduce && btn.current && window.matchMedia("(pointer: fine)").matches) {
-        const xTo = gsap.quickTo(btn.current, "x", { duration: 0.5, ease: "power3" });
-        const yTo = gsap.quickTo(btn.current, "y", { duration: 0.5, ease: "power3" });
-        const rXTo = gsap.quickTo(btn.current, "rotationX", { duration: 0.5, ease: "power3" });
-        const rYTo = gsap.quickTo(btn.current, "rotationY", { duration: 0.5, ease: "power3" });
-
-        const move = (e: MouseEvent) => {
-          const r = btn.current!.getBoundingClientRect();
-          const dx = e.clientX - (r.left + r.width / 2);
-          const dy = e.clientY - (r.top + r.height / 2);
-          if (Math.hypot(dx, dy) < 160) {
-            xTo(dx * 0.14);
-            yTo(dy * 0.14);
-            rYTo(dx * 0.035);
-            rXTo(-dy * 0.035);
-          } else {
-            xTo(0);
-            yTo(0);
-            rXTo(0);
-            rYTo(0);
-          }
-        };
-        const leave = () => {
-          xTo(0);
-          yTo(0);
-          rXTo(0);
-          rYTo(0);
-        };
-        btn.current.addEventListener("mousemove", move);
-        btn.current.addEventListener("mouseleave", leave);
-      }
-    }, root);
-
-    return () => ctx.revert();
+  const show = useCallback(() => {
+    window.clearTimeout(hideTimer.current);
+    setMode(isSheet() ? "sheet" : "pop");
+    setOpen(true);
   }, []);
 
-  /** Ouvre au-dessus du bouton si l'espace en dessous est insuffisant. */
-  const placePanel = () => {
+  const hide = useCallback(() => {
+    window.clearTimeout(hideTimer.current);
+    setOpen(false);
+  }, []);
+
+  /** Fermeture différée : laisse le temps au curseur de passer du bouton au panneau. */
+  const hideSoon = useCallback(() => {
+    window.clearTimeout(hideTimer.current);
+    hideTimer.current = window.setTimeout(() => setOpen(false), 180);
+  }, []);
+
+  // Positionnement avant affichage + suivi du redimensionnement.
+  useLayoutEffect(() => {
+    if (!open || mode !== "pop") return;
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open, mode, place]);
+
+  // Popover : se ferme au défilement (il est ancré au bouton).
+  useEffect(() => {
+    if (!open || mode !== "pop") return;
+    const onScroll = () => hide();
+    window.addEventListener("scroll", onScroll, { passive: true, once: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open, mode, hide]);
+
+  // Échap ferme ; la sheet reçoit le focus et le rend au bouton à la fermeture.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        hide();
+        btn.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    if (mode === "sheet") closeBtn.current?.focus({ preventScroll: true });
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, mode, hide]);
+
+  // Révélation du contenu : baguette, mots, puces.
+  useEffect(() => {
     const p = panel.current;
-    const b = btn.current;
-    if (!p || !b) return;
-    const r = b.getBoundingClientRect();
-    const h = p.offsetHeight || 260;
-    const flip = window.innerHeight - r.bottom < h + 16 && r.top > h + 16;
-    p.classList.toggle("above", flip);
-  };
+    if (!open || !p || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const q = gsap.utils.selector(p);
+    const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+    tl.fromTo(q(".ctd-baton path"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.2, ease: "power3.inOut" }, 0.15)
+      .fromTo(q(".ctd-baton circle"), { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: 0.5, ease: "back.out(3)" }, 1.1)
+      .fromTo(q(".ctd-lead .ctd-w"), { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.9, stagger: 0.06 }, 0.25)
+      .fromTo(q(".ctd-text .ctd-w"), { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.012 }, 0.45)
+      .fromTo(q(".ctd-chips li, .ctd-sign"), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.06 }, 0.8);
+    return () => {
+      tl.kill();
+    };
+  }, [open]);
 
-  const open = () => {
-    placePanel();
-    setIsOpen(true);
-    tl.current?.play();
-    if (!closeOnScroll.current) {
-      closeOnScroll.current = () => close();
-      window.addEventListener("scroll", closeOnScroll.current, { passive: true, once: true });
-    }
-  };
+  useEffect(() => () => window.clearTimeout(hideTimer.current), []);
 
-  const close = () => {
-    setIsOpen(false);
-    tl.current?.reverse();
-    if (closeOnScroll.current) {
-      window.removeEventListener("scroll", closeOnScroll.current);
-      closeOnScroll.current = null;
-    }
-  };
+  const popHover =
+    mode === "pop"
+      ? {
+          onPointerEnter: (e: React.PointerEvent) => e.pointerType === "mouse" && window.clearTimeout(hideTimer.current),
+          onPointerLeave: (e: React.PointerEvent) => e.pointerType === "mouse" && hideSoon(),
+        }
+      : {};
 
-  return (
-    <div
-      ref={root}
-      className="relative inline-block"
-      onPointerEnter={(e) => {
-        if (e.pointerType === "mouse") open();
-      }}
-      onPointerLeave={(e) => {
-        if (e.pointerType === "mouse") close();
-      }}
-      onFocus={open}
-      onBlur={close}
-      onKeyDown={(e) => e.key === "Escape" && close()}
-    >
-      <style>{`.panel.above { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 1.5rem; }`}</style>
-
-      <button
-        ref={btn}
-        type="button"
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        aria-controls="conductor-panel"
-        style={{ transformStyle: "preserve-3d" }}
-        onClick={() => {
-          const t = tl.current;
-          if (t) (t.progress() > 0.5 ? close : open)();
-        }}
-        className="ctd-btn group relative inline-flex min-h-[36px] items-center gap-1.5 overflow-hidden rounded-full border border-white/25 bg-gradient-to-b from-[#241033] to-[#0b0710] px-3.5 py-1.5 shadow-[0_10px_28px_-20px_rgba(139,92,246,0.9)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-[#8B5CF6]/70 hover:shadow-[0_14px_36px_-18px_rgba(139,92,246,0.95)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD000] md:min-h-[32px] md:gap-2 md:px-4 md:py-1"
-      >
-        {/* Pastille orange : repère d'ouverture, pulse au repos. */}
-        <span aria-hidden className="relative flex h-1.5 w-1.5 flex-none">
-          <span className="ctd-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6A00] opacity-70" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />
-        </span>
-
-        <span className="relative block font-[family-name:var(--font-archivo)] text-[9px] uppercase leading-tight tracking-[0.12em] text-white sm:text-[10px] md:text-[11px] md:tracking-[0.14em]">
-          {label}
-        </span>
-
-        {/* Chevron : indique l'ouverture, bascule à l'état actif. */}
-        <svg
-          aria-hidden
-          viewBox="0 0 24 24"
-          fill="none"
-          className={`ctd-caret h-2.5 w-2.5 flex-none text-[#FFD000] transition-transform duration-300 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        >
-          <path
-            d="M6 9l6 6 6-6"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-      {/* Panneau manifeste */}
+  const panelEl = (
+    <>
+      {mode === "sheet" && <div className="ctd ctd-backdrop" data-open={open} onClick={hide} aria-hidden />}
       <div
         ref={panel}
         id="conductor-panel"
         role="dialog"
-        aria-label="Manifeste"
-        className={`panel pointer-events-none absolute top-full left-1/2 z-50 mt-5 w-[min(34rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-[28px] border border-white/12 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.95)] md:w-[min(34rem,90vw)] ${
-          align === "left" ? "md:left-0 md:translate-x-0" : "md:right-0 md:left-auto md:translate-x-0"
-        }`}
-        style={{
-          clipPath: "circle(0% at 50% 50%)",
-          background: "radial-gradient(120% 120% at 50% 0%, #3B1173 0%, #180A38 55%, #0D0620 100%)",
-        }}
+        aria-modal={mode === "sheet" ? true : undefined}
+        aria-labelledby="ctd-title"
+        aria-hidden={!open}
+        className={`ctd ctd-panel ctd-panel--${mode}`}
+        data-open={open}
+        data-side={pos.side}
+        style={mode === "pop" ? { left: pos.left, top: pos.top, maxHeight: pos.maxH } : undefined}
+        {...popHover}
       >
-        {/* Scan line (bâton lumineux) */}
-        <div className="scan-line absolute left-0 top-0 z-20 h-px w-full bg-gradient-to-r from-transparent via-[#FFD000] to-transparent opacity-50" />
+        {mode === "sheet" && <span className="ctd-grip" aria-hidden />}
+        <div className="ctd-in">
+          <div className="ctd-top">
+            <span>
+              <b>(Manifeste)</b> · Nousdev
+            </span>
+            <button ref={closeBtn} type="button" className="ctd-close" onClick={hide} aria-label="Fermer le manifeste">
+              <X size={16} aria-hidden />
+            </button>
+          </div>
 
-        {/* Grain très léger pour éviter le plat */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
-        />
+          <svg className="ctd-baton" viewBox="0 0 340 44" preserveAspectRatio="none" aria-hidden>
+            <path d="M4 34 C 60 4, 110 44, 170 20 S 270 2, 326 18" pathLength={1} strokeDasharray="1" />
+            <circle cx="326" cy="18" r="5" />
+          </svg>
 
-        <div className="relative z-10 px-7 py-8 sm:px-9 sm:py-10">
-          <p className="mb-4 flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[#FFD000]">
-            <span aria-hidden className="inline-block h-px w-6 bg-[#FF6A00]" />
-            Manifeste
-          </p>
-
-          <p className="font-[family-name:var(--font-body)] text-[15px] leading-[1.7] text-[#F3EEFF] sm:text-base md:text-lg md:leading-[1.75]">
-            {TEXT.split(" ").map((w, i) => (
-              <span key={i} className="inline-block overflow-hidden align-top">
-                <span className="word inline-block will-change-transform">{w}&nbsp;</span>
+          <h3 id="ctd-title" className="ctd-lead">
+            {["Le", "code", "joue."].map((w) => (
+              <span key={w} className="ctd-w">
+                {w}&nbsp;
               </span>
             ))}
+            <em>
+              {["J'orchestre."].map((w) => (
+                <span key={w} className="ctd-w">
+                  {w}
+                </span>
+              ))}
+            </em>
+          </h3>
+
+          <p className="ctd-text">
+            {SEGMENTS.map((s, si) => {
+              const list = s.t.split(" ");
+              const words = list.map((w, wi) => (
+                <span key={wi} className="ctd-w">
+                  {w}
+                  {/* Espace insécable entre les mots du segment, jamais après le dernier
+                      (sinon le surlignage déborde) ; « l' » se colle au mot suivant. */}
+                  {wi < list.length - 1 ? " " : ""}
+                </span>
+              ));
+              const sep = si < SEGMENTS.length - 1 && !s.t.endsWith("'") ? " " : "";
+              return (
+                <span key={si}>
+                  {s.mark ? <mark>{words}</mark> : words}
+                  {sep}
+                </span>
+              );
+            })}
           </p>
 
-          <p className="panel-sign mt-6 text-[11px] uppercase tracking-[0.24em] text-[#C4B5FD] opacity-0">
-            Nousdev — orchestration IA
+          <ul className="ctd-chips" aria-label="Piliers">
+            <li>IA · orchestration</li>
+            <li>Ergonomie</li>
+            <li>Raffinement visuel</li>
+          </ul>
+
+          <p className="ctd-sign">
+            <span>
+              <b>Nousdev</b> — chef d&apos;orchestre
+            </span>
+            <span aria-hidden>01 / 01</span>
           </p>
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <div
+      className="ctd relative inline-block"
+      onPointerEnter={(e) => e.pointerType === "mouse" && !isSheet() && show()}
+      onPointerLeave={(e) => e.pointerType === "mouse" && mode === "pop" && hideSoon()}
+    >
+      <button
+        ref={btn}
+        type="button"
+        className="ctd-btn"
+        data-magnetic
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls="conductor-panel"
+        onClick={() => (open ? hide() : show())}
+        onFocus={(e) => e.currentTarget.matches(":focus-visible") && show()}
+        onBlur={(e) => {
+          // Au clavier, on ne ferme pas si le focus entre dans le panneau.
+          if (mode === "pop" && !panel.current?.contains(e.relatedTarget as Node)) hideSoon();
+        }}
+      >
+        <span className="ctd-dot" aria-hidden>
+          <i className="ctd-ping" />
+          <b />
+        </span>
+        <span>{label}</span>
+        <svg className="ctd-caret" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {mounted && createPortal(panelEl, document.body)}
     </div>
   );
 }

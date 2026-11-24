@@ -1,0 +1,38 @@
+/* ─────────────────────────────────────────────────────────────
+   Couche de motion globale : progression de lecture, baguette, aimantation.
+   Le curseur natif n'est jamais masqué.
+   ───────────────────────────────────────────────────────────── */
+
+/* Barre de progression de lecture. */
+.mc-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-brand-orange, #ff6a00), var(--color-brand-yellow, #ffd000));
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+/* La baguette : un canvas plein écran, transparent aux clics. */
+.mc-baton {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .mc-baton {
+    display: none;
+  }
+}
+
+/* Éléments aimantés : rendu sur leur propre calque. */
+[data-magnetic] {
+  will-change: transform;
+}

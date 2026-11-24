@@ -16,7 +16,7 @@ describe("projectSchema", () => {
     const parsed = projectSchema.parse(valid);
     expect(parsed.kicker).toBe("");
     expect(parsed.tags).toEqual([]);
-    expect(parsed.from).toBe("#7c3aed");
+    expect(parsed.from).toBe("#1a1a1a");
     expect(parsed.to).toBe("#FF6A00");
     expect(parsed.detail.blocks).toEqual([]);
     expect(parsed.detail.facts).toEqual([]);

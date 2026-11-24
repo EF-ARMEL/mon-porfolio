@@ -44,9 +44,10 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     const t1 = setTimeout(refresh, 1000);
     const t2 = setTimeout(refresh, 3000);
 
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
+    // Fonction nommée : la même référence doit être retirée au démontage
+    // (avant, on retirait lenis.raf, qui n'avait jamais été ajoutée → fuite).
+    const raf = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(raf);
 
     gsap.ticker.lagSmoothing(0);
 
@@ -56,7 +57,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       clearTimeout(t2);
       lenisInstance = null;
       lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
+      gsap.ticker.remove(raf);
     };
   }, []);
 

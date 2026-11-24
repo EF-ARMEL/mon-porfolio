@@ -109,7 +109,7 @@ export default function Stack() {
               {String(TOOL_COUNT).padStart(2, "0")} {t("stack.instruments", "instruments")}
             </span>
           </p>
-          <h2 id="stk-title" className="stk-title" aria-label={`${title1} ${title2}.`}>
+          <h2 id="stk-title" className="stk-title" data-skew aria-label={`${title1} ${title2}.`}>
             <span className="stk-ln">
               <Chars text={title1} />
             </span>
@@ -128,7 +128,7 @@ export default function Stack() {
         </p>
       </header>
 
-      <div ref={lensArea} onPointerLeave={(e) => e.pointerType === "mouse" && setActive(-1)}>
+      <div ref={lensArea} data-cursor="none" onPointerLeave={(e) => e.pointerType === "mouse" && setActive(-1)}>
         {SECTIONS.map((s, si) => (
           <div key={s.id} className="stk-group">
             <div className="stk-ghead">

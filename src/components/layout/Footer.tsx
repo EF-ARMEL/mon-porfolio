@@ -39,7 +39,7 @@ export default function Footer() {
         stagger: 0.08,
         ease: "expo.out",
         immediateRender: false,
-        scrollTrigger: { trigger: root.current, start: "top 85%", once: true },
+        scrollTrigger: { trigger: root.current, start: "top 85%", toggleActions: "play none none none" },
       });
       gsap.from(".ft-word", {
         yPercent: 30,
@@ -47,7 +47,7 @@ export default function Footer() {
         duration: 1.2,
         ease: "expo.out",
         immediateRender: false,
-        scrollTrigger: { trigger: root.current, start: "top 75%", once: true },
+        scrollTrigger: { trigger: root.current, start: "top 75%", toggleActions: "play none none none" },
       });
     },
     { scope: root }
@@ -65,7 +65,7 @@ export default function Footer() {
           <p className="max-w-sm font-body text-lg leading-snug text-white/90">
             Un projet en tête&nbsp;? Donnons-lui une forme, du premier pixel à la mise en ligne.
           </p>
-          <a href="#contact" className="group mt-7 inline-flex items-center gap-4">
+          <a href="#contact" data-magnetic className="group mt-7 inline-flex items-center gap-4">
             <span className="grid h-14 w-14 place-items-center rounded-full border border-white/25 transition-all duration-300 group-hover:border-[#FF6A3D] group-hover:bg-[#FF6A3D]">
               <ArrowUpRight size={22} className="transition-transform duration-300 group-hover:rotate-45" />
             </span>

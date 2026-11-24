@@ -305,7 +305,7 @@ export default function ContactTerminal({ onRestart }: { onRestart?: () => void 
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const intro = gsap.timeline({
-          scrollTrigger: { trigger: root.current, start: "top 65%", once: true },
+          scrollTrigger: { trigger: root.current, start: "top 65%", toggleActions: "play none none none" },
           defaults: { ease: "expo.out" },
         });
 

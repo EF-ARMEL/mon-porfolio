@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { getLenis } from "@/components/providers/SmoothScrollProvider";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -100,8 +101,11 @@ export default function ProjectDetail({ project, onClose }: Props) {
   useEffect(() => {
     const prev = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
+    // Lenis anime le scroll lui-même : il faut aussi le mettre en pause.
+    getLenis()?.stop();
     return () => {
       document.documentElement.style.overflow = prev;
+      getLenis()?.start();
     };
   }, []);
 
@@ -421,7 +425,7 @@ const CSS = `
   font-weight: 700;
   letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: #c4b5fd;
+  color: #ffb37a;
   padding-bottom: 0.14em;
 }
 .d-title-main {

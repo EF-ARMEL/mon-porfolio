@@ -1,0 +1,322 @@
+/* ─────────────────────────────────────────────────────────────
+   Manifeste « Chef d'Orchestre »
+   Desktop : popover fixe, calé sur le bouton et toujours dans l'écran.
+   Mobile / tactile : panneau qui monte du bas (bottom sheet).
+   ───────────────────────────────────────────────────────────── */
+.ctd {
+  --ctd-ease: cubic-bezier(0.77, 0, 0.18, 1);
+  --ctd-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ctd-orange: var(--color-brand-orange, #ff6a00);
+  --ctd-yellow: var(--color-brand-yellow, #ffd000);
+  --ctd-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+}
+
+/* ───── Bouton ───── */
+.ctd-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(8, 8, 8, 0.78);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: #fff;
+  font-family: var(--font-archivo);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: border-color 0.4s var(--ctd-out), color 0.4s var(--ctd-out);
+}
+@media (min-width: 768px) {
+  .ctd-btn {
+    min-height: 40px;
+  }
+}
+/* Remplissage orange à l'ouverture, cohérent avec les sections Stack/Méthode. */
+.ctd-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ctd-orange);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.6s var(--ctd-ease);
+  z-index: -1;
+}
+.ctd-btn[aria-expanded="true"] {
+  border-color: var(--ctd-orange);
+  color: #000;
+}
+.ctd-btn[aria-expanded="true"]::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+.ctd-btn:focus-visible {
+  outline: 2px solid var(--ctd-yellow);
+  outline-offset: 4px;
+}
+.ctd-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex: none;
+}
+.ctd-dot i,
+.ctd-dot b {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ctd-orange);
+  transition: background-color 0.4s var(--ctd-out);
+}
+.ctd-btn[aria-expanded="true"] .ctd-dot i,
+.ctd-btn[aria-expanded="true"] .ctd-dot b {
+  background: #000;
+}
+.ctd-caret {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  color: var(--ctd-yellow);
+  transition: transform 0.5s var(--ctd-ease), color 0.4s var(--ctd-out);
+}
+.ctd-btn[aria-expanded="true"] .ctd-caret {
+  transform: rotate(180deg);
+  color: #000;
+}
+
+/* ───── Panneau commun ───── */
+.ctd-panel {
+  position: fixed;
+  z-index: 1000;
+  color: #f5f5f5;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255, 106, 0, 0.22), transparent 55%),
+    radial-gradient(80% 60% at 0% 100%, rgba(255, 208, 0, 0.08), transparent 60%),
+    #070707;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 50px 120px -40px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 106, 0, 0.08);
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ctd-panel[data-open="true"] {
+  visibility: visible;
+  pointer-events: auto;
+}
+.ctd-panel::after {
+  /* Grain discret pour éviter l'aplat numérique. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Popover (desktop) : rideau qui descend (ou monte s'il s'ouvre au-dessus). */
+.ctd-panel--pop {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border-radius: 26px;
+  clip-path: inset(0 0 100% 0 round 26px);
+  transition: clip-path 0.75s var(--ctd-ease), visibility 0s linear 0.75s;
+}
+.ctd-panel--pop[data-side="above"] {
+  clip-path: inset(100% 0 0 0 round 26px);
+}
+.ctd-panel--pop[data-open="true"] {
+  clip-path: inset(0 0 0 0 round 26px);
+  transition: clip-path 0.75s var(--ctd-ease), visibility 0s;
+}
+
+/* Bottom sheet (mobile / tactile). */
+.ctd-panel--sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86svh;
+  overflow-y: auto;
+  border-radius: 28px 28px 0 0;
+  border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(102%);
+  transition: transform 0.7s var(--ctd-ease), visibility 0s linear 0.7s;
+}
+.ctd-panel--sheet[data-open="true"] {
+  transform: none;
+  transition: transform 0.7s var(--ctd-ease), visibility 0s;
+}
+.ctd-grip {
+  display: block;
+  width: 44px;
+  height: 4px;
+  margin: 12px auto 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.25);
+}
+.ctd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s var(--ctd-out), visibility 0s linear 0.5s;
+}
+.ctd-backdrop[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s var(--ctd-out), visibility 0s;
+}
+
+/* ───── Contenu ───── */
+.ctd-in {
+  position: relative;
+  z-index: 1;
+  padding: 26px 26px 24px;
+}
+@media (min-width: 768px) {
+  .ctd-in {
+    padding: 30px 32px 26px;
+  }
+}
+.ctd-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-family: var(--ctd-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+.ctd-top b {
+  color: var(--ctd-orange);
+  font-weight: 600;
+}
+.ctd-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+.ctd-close:focus-visible {
+  outline: 2px solid var(--ctd-yellow);
+  outline-offset: 2px;
+}
+
+/* La baguette : un trait qui se dessine comme un geste de chef d'orchestre. */
+.ctd-baton {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 0 0 14px;
+  overflow: visible;
+}
+.ctd-baton path {
+  fill: none;
+  stroke: var(--ctd-orange);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.ctd-baton circle {
+  fill: var(--ctd-yellow);
+}
+
+.ctd-lead {
+  margin: 0 0 14px;
+  font-family: var(--font-heading);
+  font-size: clamp(1.45rem, 5.6vw, 1.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.ctd-lead em {
+  font-style: normal;
+  color: var(--ctd-orange);
+}
+.ctd-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(245, 245, 245, 0.78);
+}
+.ctd-text mark {
+  background: none;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: inset 0 -0.45em 0 rgba(255, 106, 0, 0.35);
+}
+.ctd-w {
+  display: inline-block;
+  will-change: transform;
+}
+
+.ctd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ctd-chips li {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: var(--ctd-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+.ctd-chips li:first-child {
+  border-color: var(--ctd-orange);
+  color: var(--ctd-orange);
+}
+.ctd-sign {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--ctd-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+.ctd-sign b {
+  color: var(--ctd-yellow);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctd-btn::before,
+  .ctd-caret,
+  .ctd-panel,
+  .ctd-backdrop {
+    transition-duration: 0.01ms !important;
+  }
+}
